@@ -1,0 +1,18 @@
+{
+    "include": [
+        "backend"
+    ],
+    "exclude": [
+        "**/node_modules",
+        "**/__pycache__"
+    ],
+    "venvPath": "backend",
+    "venv": ".venv",
+    "executionEnvironments": [
+        {
+            "root": "backend"
+        }
+    ],
+    "typeCheckingMode": "basic",
+    "useLibraryCodeForTypes": true
+}
