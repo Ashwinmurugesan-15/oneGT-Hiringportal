@@ -1,0 +1,199 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { CapabilityProvider } from './contexts/CapabilityContext';
+import { ToastProvider } from './contexts/ToastContext';
+import Layout from './components/layout/Layout';
+import Login from './pages/Login';
+import Loading from './components/common/Loading';
+
+// HRMS Pages
+import {
+  Dashboard,
+  Associates,
+  Projects,
+  Allocations,
+  Payroll,
+  Expenses,
+  CurrencyRates,
+  Customers,
+  Timesheets,
+  Assets,
+  Settings,
+  Profile,
+  SalaryStructure,
+  OrganizationChart
+} from './pages/hrms';
+
+// CRMS Pages
+import {
+  CRMSDashboard,
+  Leads,
+  Opportunities,
+  CRMSCustomers,
+  Contacts,
+  Deals,
+  CRMSTasks,
+  Calls,
+  CRMSInvoices,
+  TemplateDesigner,
+  FinanceView
+} from './pages/crms';
+
+// Talent Management Pages
+import {
+  TalentDashboard,
+  DemandsPage,
+  CandidatesPage,
+  InterviewsPage
+} from './pages/talent';
+import TalentModuleWrapper from './modules/talent/TalentModuleWrapper';
+
+// Assessment Portal Pages
+import { AssessmentDashboard } from './pages/assessment';
+
+// Protected route wrapper that checks authentication
+function ProtectedRoute({ children, requiredRoles = [] }) {
+  const { isAuthenticated, loading, user } = useAuth();
+
+  if (loading) {
+    return <Loading />;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Check role-based access if required
+  if (requiredRoles.length > 0 && !requiredRoles.includes(user?.role)) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+}
+
+// Route that redirects authenticated users away from login
+function PublicRoute({ children }) {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return <Loading />;
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+}
+
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route
+        path="/login"
+        element={
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
+        }
+      />
+
+      {/* Root Redirect */}
+      <Route path="/" element={<Navigate to="/hrms" replace />} />
+
+      {/* HRMS Module */}
+      <Route
+        path="/hrms"
+        element={
+          <ProtectedRoute>
+            <Layout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<Dashboard />} />
+        <Route path="associates" element={<Associates />} />
+        <Route path="projects" element={<Projects />} />
+        <Route path="allocations" element={<Allocations />} />
+        <Route path="payroll" element={<Payroll />} />
+        <Route path="expenses" element={<Expenses />} />
+        <Route path="currency" element={<CurrencyRates />} />
+        <Route path="customers" element={<Customers />} />
+        <Route path="timesheets" element={<Timesheets />} />
+        <Route path="assets" element={<Assets />} />
+        <Route path="settings" element={<Settings />} />
+        <Route path="profile" element={<Profile />} />
+        <Route path="org-chart" element={<OrganizationChart />} />
+        <Route path="paystructure" element={<SalaryStructure />} />
+      </Route>
+
+      {/* CRMS Module */}
+      <Route
+        path="/crms"
+        element={
+          <ProtectedRoute>
+            <Layout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<CRMSDashboard />} />
+        <Route path="leads" element={<Leads />} />
+        <Route path="opportunities" element={<Opportunities />} />
+        <Route path="customers" element={<CRMSCustomers />} />
+        <Route path="contacts" element={<Contacts />} />
+        <Route path="deals" element={<Deals />} />
+        <Route path="tasks" element={<CRMSTasks />} />
+        <Route path="calls" element={<Calls />} />
+        <Route path="invoices" element={<CRMSInvoices />} />
+        <Route path="invoice-templates" element={<TemplateDesigner />} />
+        <Route path="finance" element={<ProtectedRoute requiredRoles={['Admin']}><FinanceView /></ProtectedRoute>} />
+      </Route>
+
+      <Route
+        path="/talent"
+        element={
+          <ProtectedRoute>
+            <Layout />
+          </ProtectedRoute>
+        }
+      >
+        <Route element={<TalentModuleWrapper />}>
+          <Route index element={<TalentDashboard />} />
+          <Route path="demands" element={<DemandsPage />} />
+          <Route path="candidates" element={<CandidatesPage />} />
+          <Route path="interviews" element={<InterviewsPage />} />
+          <Route path="*" element={<TalentDashboard />} />
+        </Route>
+      </Route>
+
+      {/* Assessment Portal Placeholders */}
+      <Route
+        path="/assessment"
+        element={
+          <ProtectedRoute>
+            <Layout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<AssessmentDashboard />} />
+        <Route path="*" element={<AssessmentDashboard />} />
+      </Route>
+
+    </Routes>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <CapabilityProvider>
+          <ToastProvider>
+            <AppRoutes />
+          </ToastProvider>
+        </CapabilityProvider>
+      </AuthProvider>
+    </BrowserRouter>
+  );
+}
+
+export default App;

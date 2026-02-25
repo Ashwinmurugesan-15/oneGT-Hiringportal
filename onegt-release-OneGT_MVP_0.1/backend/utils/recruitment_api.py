@@ -1,0 +1,285 @@
+"""
+guhatek_api.py – Async Python rewrite of src/lib/guhatek-api.ts
+Uses httpx for async HTTP, preserves token caching, retry logic, and mock mode.
+"""
+import os
+import time
+import json
+import asyncio
+import logging
+from typing import Any, Optional
+
+import httpx
+from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).parent.parent / ".env")
+
+logger = logging.getLogger(__name__)
+
+TOKEN_LIFETIME_S = 50 * 60  # 50 minutes
+
+_cached_token: Optional[str] = None
+_token_expiry: float = 0.0
+_token_lock = asyncio.Lock()
+
+
+def _get_config() -> dict:
+    return {
+        "api_url": os.getenv("GUHATEK_API_URL", "").rstrip("/"),
+        "api_key": os.getenv("GUHATEK_API_KEY", ""),
+        "use_mock": False,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Auth token
+# ---------------------------------------------------------------------------
+
+async def _get_auth_token() -> str:
+    global _cached_token, _token_expiry
+    cfg = _get_config()
+
+    if cfg["use_mock"]:
+        return f"mock-token-{int(time.time())}"
+
+    async with _token_lock:
+        if _cached_token and time.time() < _token_expiry:
+            return _cached_token
+
+        if not cfg["api_url"] or not cfg["api_key"]:
+            raise RuntimeError("GUHATEK_API_URL or GUHATEK_API_KEY is not configured")
+
+        try:
+            async with httpx.AsyncClient(verify=False, timeout=15) as client:
+                resp = await client.get(
+                    f"{cfg['api_url']}/api/token",
+                    headers={"x-api-key": cfg["api_key"]},
+                )
+                resp.raise_for_status()
+                data = resp.json()
+                _cached_token = data["token"]
+                _token_expiry = time.time() + TOKEN_LIFETIME_S
+                logger.info("✅ Auth token fetched and cached")
+                return _cached_token  # type: ignore[return-value]
+        except Exception as exc:
+            logger.error("❌ Auth Token Fetch Error: %s", exc)
+            raise RuntimeError("API_CONNECTION_FAILED: Unable to reach Guhatek API.") from exc
+
+    raise RuntimeError("Unreachable: token fetch failed without raising")  # satisfy type checker
+
+
+def clear_token_cache() -> None:
+    global _cached_token, _token_expiry
+    _cached_token = None
+    _token_expiry = 0.0
+
+
+# ---------------------------------------------------------------------------
+# Helper
+# ---------------------------------------------------------------------------
+
+async def _authed_request(
+    method: str,
+    path: str,
+    retries: int = 1,
+    **kwargs,
+) -> Any:
+    cfg = _get_config()
+    url = f"{cfg['api_url']}{path}"
+
+    for attempt in range(retries + 1):
+        token = await _get_auth_token()
+        headers = kwargs.pop("headers", {})
+        headers["Authorization"] = f"Bearer {token}"
+
+        async with httpx.AsyncClient(verify=False, timeout=20) as client:
+            resp = await client.request(method, url, headers=headers, **kwargs)
+
+        if resp.status_code >= 500 and attempt < retries:
+            logger.warning("⚠️ Guhatek API 5xx, retrying (%d left)…", retries - attempt)
+            await asyncio.sleep(1)
+            continue
+
+        if resp.status_code == 401:
+            # Token may be stale – clear and retry once
+            clear_token_cache()
+            if attempt < retries:
+                continue
+
+        resp.raise_for_status()
+        return resp.json()
+
+    return None
+
+
+def _extract_list(data: Any, *keys: str) -> list:
+    if isinstance(data, list):
+        return data
+    for k in keys:
+        if isinstance(data.get(k), list):
+            return data[k]
+    return []
+
+
+# ---------------------------------------------------------------------------
+# Applications
+# ---------------------------------------------------------------------------
+
+async def get_applications() -> list:
+    cfg = _get_config()
+    if cfg["use_mock"]:
+        return [
+            {"id": "1", "full_name": "Alice Mock", "email": "alice@example.com",
+             "contact_number": "1234567890", "interested_position": "Frontend Dev",
+             "application_status": "applied", "submitted_at": "2026-01-01T00:00:00Z"},
+        ]
+    data = await _authed_request("GET", "/api/applications", retries=1)
+    return _extract_list(data, "data", "applications")
+
+
+async def insert_application(file_bytes: bytes, filename: str, application_data: dict) -> Optional[dict]:
+    cfg = _get_config()
+    if cfg["use_mock"]:
+        return {"success": True, "id": f"mock-id-{int(time.time())}"}
+    token = await _get_auth_token()
+    async with httpx.AsyncClient(verify=False, timeout=30) as client:
+        resp = await client.post(
+            f"{cfg['api_url']}/api/applications",
+            headers={"Authorization": f"Bearer {token}"},
+            files={"file": (filename, file_bytes)},
+            data={"applicationData": json.dumps(application_data)},
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+
+async def update_application(app_id: str, updates: dict) -> Optional[dict]:
+    cfg = _get_config()
+    if cfg["use_mock"]:
+        return {"success": True}
+    data = await _authed_request(
+        "PATCH", f"/api/applications/{app_id}",
+        json=updates,
+    )
+    return data
+
+
+async def delete_application(app_id: str) -> Optional[dict]:
+    cfg = _get_config()
+    if cfg["use_mock"]:
+        return {"success": True}
+    data = await _authed_request("DELETE", f"/api/applications/{app_id}")
+    return data
+
+
+# ---------------------------------------------------------------------------
+# Job Openings / Demands
+# ---------------------------------------------------------------------------
+
+async def get_job_openings() -> list:
+    cfg = _get_config()
+    if cfg["use_mock"]:
+        return []
+    data = await _authed_request("GET", "/api/applications/jobOpenings", retries=1)
+    return _extract_list(data, "data", "jobOpenings")
+
+
+async def create_demand(job_opening: dict) -> Optional[dict]:
+    cfg = _get_config()
+    if cfg["use_mock"]:
+        return {"success": True, "id": f"mock-demand-{int(time.time())}"}
+    token = await _get_auth_token()
+    async with httpx.AsyncClient(verify=False, timeout=20) as client:
+        resp = await client.post(
+            f"{cfg['api_url']}/api/applications/createDemand",
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+            json={"jobOpening": json.dumps(job_opening)},
+        )
+        if not resp.is_success:
+            err = resp.json() if resp.headers.get("content-type", "").startswith("application/json") else {"message": resp.text}
+            return {"success": False, "error": err.get("error", "Bad Request"), "message": err.get("message"), "status": resp.status_code}
+        data = resp.json()
+        return {"success": True, "id": data.get("id")}
+
+
+async def update_demand(demand_id: str, updates: dict) -> Optional[dict]:
+    cfg = _get_config()
+    if cfg["use_mock"]:
+        return {"success": True, "updated": {}}
+    token = await _get_auth_token()
+    async with httpx.AsyncClient(verify=False, timeout=20) as client:
+        resp = await client.patch(
+            f"{cfg['api_url']}/api/applications/{demand_id}/updateDemand",
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+            json=updates,
+        )
+        if not resp.is_success:
+            err = resp.json() if resp.headers.get("content-type", "").startswith("application/json") else {"message": resp.text}
+            return {"success": False, "error": err.get("error"), "message": err.get("message"), "status": resp.status_code}
+        data = resp.json()
+        return {"success": True, "updated": data.get("updated", {})}
+
+
+async def delete_demand(demand_id: str) -> Optional[dict]:
+    cfg = _get_config()
+    if cfg["use_mock"]:
+        return {"success": True}
+    token = await _get_auth_token()
+    async with httpx.AsyncClient(verify=False, timeout=20) as client:
+        resp = await client.delete(
+            f"{cfg['api_url']}/api/applications/{demand_id}/deleteDemand",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        if not resp.is_success:
+            err = resp.json() if resp.headers.get("content-type", "").startswith("application/json") else {"message": resp.text}
+            return {"success": False, "error": err.get("error"), "message": err.get("message"), "status": resp.status_code}
+        return {"success": True}
+
+
+# ---------------------------------------------------------------------------
+# Scheduled Meetings / Interviews
+# ---------------------------------------------------------------------------
+
+async def get_scheduled_meetings() -> list:
+    cfg = _get_config()
+    if cfg["use_mock"]:
+        return []
+    data = await _authed_request("GET", "/api/applications/scheduleMeet", retries=1)
+    return _extract_list(data, "data", "meetings")
+
+
+async def schedule_meet(meeting_data: dict) -> Optional[dict]:
+    cfg = _get_config()
+    if cfg["use_mock"]:
+        return {"success": True, "id": f"mock-meet-{int(time.time())}"}
+    token = await _get_auth_token()
+    async with httpx.AsyncClient(verify=False, timeout=20) as client:
+        resp = await client.post(
+            f"{cfg['api_url']}/api/applications/scheduleMeet",
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+            json={"scheduleMeeting": json.dumps(meeting_data)},
+        )
+        if not resp.is_success:
+            err = resp.json() if resp.headers.get("content-type", "").startswith("application/json") else {"message": resp.text}
+            return {"success": False, "error": err.get("error", "Bad Request"), "message": err.get("message"), "status": resp.status_code}
+        data = resp.json()
+        return {"success": True, "id": data.get("id")}
+
+
+async def update_meet(meet_id: str, updates: dict) -> Optional[dict]:
+    cfg = _get_config()
+    if cfg["use_mock"]:
+        return {"success": True, "updated": {}}
+    token = await _get_auth_token()
+    async with httpx.AsyncClient(verify=False, timeout=20) as client:
+        resp = await client.patch(
+            f"{cfg['api_url']}/api/applications/{meet_id}/updateMeet",
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+            json=updates,
+        )
+        if not resp.is_success:
+            err = resp.json() if resp.headers.get("content-type", "").startswith("application/json") else {"message": resp.text}
+            return {"success": False, "error": err.get("error"), "message": err.get("message"), "status": resp.status_code}
+        data = resp.json()
+        return {"success": True, "updated": data.get("updated", {})}
