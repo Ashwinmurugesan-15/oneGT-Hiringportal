@@ -1,5 +1,5 @@
-// IDE Sync Trigger: 4
-import { useState, useEffect } from 'react';
+// IDE Sync Trigger: 5
+import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { Candidate, InterviewRound } from '@/types/recruitment';
 import { mockDemands } from '@/data/mockData';
 import {
@@ -201,7 +201,7 @@ export const ScheduleInterviewDialog = ({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!candidate) return;
 
@@ -353,7 +353,7 @@ export const ScheduleInterviewDialog = ({
               <Input
                 type="date"
                 value={formData.date}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('date', e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => handleFormChange('date', e.target.value)}
                 required
               />
             </div>
@@ -362,7 +362,7 @@ export const ScheduleInterviewDialog = ({
               <Input
                 type="time"
                 value={formData.time}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('time', e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => handleFormChange('time', e.target.value)}
                 required
               />
             </div>
@@ -373,7 +373,7 @@ export const ScheduleInterviewDialog = ({
               <Label>Interviewer Name</Label>
               <Input
                 value={formData.interviewerName}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('interviewerName', e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => handleFormChange('interviewerName', e.target.value)}
                 placeholder="Enter interviewer name"
               />
             </div>
@@ -382,7 +382,7 @@ export const ScheduleInterviewDialog = ({
               <Input
                 type="email"
                 value={formData.interviewerEmail}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('interviewerEmail', e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => handleFormChange('interviewerEmail', e.target.value)}
                 placeholder="interviewer@company.com"
               />
             </div>
@@ -392,7 +392,7 @@ export const ScheduleInterviewDialog = ({
             <Label>Meeting Link *</Label>
             <Input
               value={formData.meetLink}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('meetLink', e.target.value)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => handleFormChange('meetLink', e.target.value)}
               placeholder="Paste meeting link here"
               required
             />
@@ -409,7 +409,7 @@ export const ScheduleInterviewDialog = ({
                 <Label>Subject</Label>
                 <Input
                   value={emailSubject}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmailSubject(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setEmailSubject(e.target.value)}
                   className="font-medium"
                 />
               </div>
@@ -417,7 +417,7 @@ export const ScheduleInterviewDialog = ({
                 <Label>Body</Label>
                 <Textarea
                   value={emailBody}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEmailBody(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setEmailBody(e.target.value)}
                   rows={10}
                   className="font-mono text-xs"
                 />

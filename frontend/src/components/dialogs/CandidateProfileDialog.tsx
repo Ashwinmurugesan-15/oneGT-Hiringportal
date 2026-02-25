@@ -1,3 +1,4 @@
+// IDE Sync Trigger: 1
 import { Candidate } from '@/types/recruitment';
 import { mockDemands } from '@/data/mockData';
 import { Mail, Phone, Briefcase, Calendar, DollarSign, MapPin, FileText, ArrowRight, X, Edit2 } from 'lucide-react';
@@ -36,7 +37,7 @@ export const CandidateProfileDialog = ({
 }: CandidateProfileDialogProps) => {
   if (!candidate) return null;
 
-  const demand = mockDemands.find(d => d.id === candidate.demandId);
+  const demand = mockDemands.find((d: { id: string }) => d.id === candidate.demandId);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

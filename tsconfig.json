@@ -3,7 +3,7 @@
         "baseUrl": ".",
         "paths": {
             "@/*": [
-                "./src/*"
+                "./frontend/src/*"
             ]
         },
         "jsx": "react-jsx",
@@ -15,8 +15,7 @@
         "strict": false
     },
     "include": [
-        "frontend/src/**/*",
-        "src/**/*"
+        "frontend/src/**/*"
     ],
     "exclude": [
         "node_modules"
