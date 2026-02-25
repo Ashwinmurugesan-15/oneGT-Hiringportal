@@ -65,12 +65,13 @@ export const Sidebar = () => {
   return (
     <aside
       className={cn(
-        'sidebar-gradient h-screen flex flex-col transition-all duration-300 border-r border-sidebar-border',
+        'h-screen flex flex-col transition-all duration-300 border-r border-white/5',
         collapsed ? 'w-16' : 'w-64'
       )}
+      style={{ background: 'linear-gradient(180deg, #0A2A43, #0F3B63)' }}
     >
       {/* Logo */}
-      <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border bg-sidebar-background">
+      <div className="h-16 flex items-center justify-between px-4 border-b border-white/5">
         {!collapsed && (
           <div className="flex items-center">
             <img
@@ -111,7 +112,7 @@ export const Sidebar = () => {
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
                 isActive
-                  ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-md'
+                  ? 'gradient-accent text-white shadow-md'
                   : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground'
               )}
             >

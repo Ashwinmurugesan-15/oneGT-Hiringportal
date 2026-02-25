@@ -9,8 +9,8 @@
     "start": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "backend": "python3 -m uvicorn backend.main:app --reload --port 8000 --app-dir ..",
-    "backend:dev": "python3 -m uvicorn backend.main:app --reload --port 8000 --log-level info --app-dir .."
+    "backend": "python3 -m uvicorn backend.main:app --reload --port 8001 --app-dir ..",
+    "backend:dev": "python3 -m uvicorn backend.main:app --reload --port 8001 --log-level info --app-dir .."
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

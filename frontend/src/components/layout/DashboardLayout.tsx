@@ -14,7 +14,7 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="flex h-screen overflow-hidden" style={{ background: 'linear-gradient(135deg, #EAF6FB, #D7EFF9, #C3E7F5)' }}>
       {/* Mobile sidebar backdrop */}
       {mobileMenuOpen && (
         <div
@@ -36,7 +36,7 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Header title={title} onMenuClick={() => setMobileMenuOpen(true)} />
-        <main className="flex-1 overflow-auto p-4 lg:p-6">
+        <main className="flex-1 overflow-auto p-4 lg:p-6" style={{ background: 'linear-gradient(135deg, #EAF6FB, #D7EFF9, #C3E7F5)' }}>
           {children}
         </main>
       </div>

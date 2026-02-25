@@ -36,70 +36,36 @@ export const Header = ({ title, onMenuClick }: HeaderProps) => {
   const availableRoles = roles;
 
   return (
-    <header className="h-16 bg-card border-b border-border px-4 lg:px-6 flex items-center justify-between shadow-sm">
-      <div className="flex items-center gap-4">
+    <header className="h-16 border-b border-white/5 px-4 lg:px-6 flex items-center justify-between shadow-sm" style={{ background: 'linear-gradient(90deg, #0B4F8A, #0D77B7, #0FA0D5)' }}>
+      <div className="flex items-center gap-4 flex-1">
         <Button
           variant="ghost"
           size="icon"
           onClick={onMenuClick}
-          className="lg:hidden"
+          className="lg:hidden text-white hover:bg-white/10"
         >
           <Menu className="h-5 w-5" />
         </Button>
-        <h1 className="text-xl font-semibold text-foreground">{title}</h1>
+        {/* Search */}
+        <div className="flex relative items-center max-w-md w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+          <Input
+            placeholder="Search candidates, demands..."
+            className="pl-10 w-full border-white/5 text-white placeholder:text-white/30 focus-visible:ring-white/10"
+            style={{ background: 'rgba(255, 255, 255, 0.05)' }}
+          />
+        </div>
       </div>
 
       <div className="flex items-center gap-4">
-        {/* Search */}
-        <div className="hidden md:flex relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search candidates, demands..."
-            className="pl-10 w-64 bg-background"
-          />
-        </div>
 
         {/* Role Switcher - Visible for roles with switching permissions (super_admin, admin, hiring_manager) */}
-        {availableRoles.length > 1 && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2 border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              >
-                <Shield className="h-4 w-4" />
-                <span className="hidden md:inline">{roles.find(r => r.value === user?.role)?.label}</span>
-                <ChevronDown className="h-4 w-4 opacity-50" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              {availableRoles.map(role => (
-                <DropdownMenuItem
-                  key={role.value}
-                  onClick={() => switchRole(role.value)}
-                  className="cursor-pointer"
-                >
-                  <div className="flex items-center gap-2">
-                    <Shield className="h-4 w-4" />
-                    <div>
-                      <div className="font-medium">{role.label}</div>
-                      <div className="text-xs text-muted-foreground">{role.description}</div>
-                    </div>
-                  </div>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
 
-        {/* Theme Toggle */}
-        <ThemeToggle />
 
         {/* Notifications */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative group">
+            <Button variant="ghost" size="icon" className="relative group text-white hover:bg-white/10">
               <AnimateIcon animateOnHover>
                 <BellRing className="h-5 w-5" />
               </AnimateIcon>
