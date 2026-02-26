@@ -1,16 +1,16 @@
 {
     "include": [
-        "backend"
+        "onegt-release-OneGT_MVP_0.1/backend"
     ],
     "exclude": [
         "**/node_modules",
         "**/__pycache__"
     ],
-    "venvPath": "backend",
+    "venvPath": "onegt-release-OneGT_MVP_0.1/backend",
     "venv": ".venv",
     "executionEnvironments": [
         {
-            "root": "backend"
+            "root": "onegt-release-OneGT_MVP_0.1/backend"
         }
     ],
     "typeCheckingMode": "basic",
