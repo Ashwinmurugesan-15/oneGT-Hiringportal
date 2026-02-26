@@ -55,6 +55,29 @@
       "applicants": 0,
       "interviewed": 0,
       "offers": 0
+    },
+    {
+      "id": "1772083329797",
+      "title": "Senior Devops Engineer",
+      "role": "Devops Engineer",
+      "experience": "5-8",
+      "location": "Coimbatore",
+      "openings": 10,
+      "skills": [
+        "AWS",
+        "Docker",
+        "jenkins",
+        "S3bucket",
+        "linux",
+        "grafana"
+      ],
+      "status": "open",
+      "createdBy": "Current User",
+      "rejected": 0,
+      "createdAt": "2026-02-26T05:22:20.000Z",
+      "applicants": 0,
+      "interviewed": 0,
+      "offers": 0
     }
   ],
   "candidates": [

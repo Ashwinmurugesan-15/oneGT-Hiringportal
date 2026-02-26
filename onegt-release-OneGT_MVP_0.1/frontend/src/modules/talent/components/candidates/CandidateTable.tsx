@@ -51,14 +51,14 @@ import { cn } from '@/lib/utils';
 // Define Badge variants locally if needed or reuse existing
 // Assuming StatusBadge handles the status string correctly
 
-interface Column {
+export interface Column {
     key: string;
     label: string;
     visible: boolean;
     sortable?: boolean;
 }
 
-const defaultColumns: Column[] = [
+export const defaultColumns: Column[] = [
     { key: 'name', label: 'Full Name', visible: true, sortable: true },
     { key: 'email', label: 'Email ID', visible: true },
     { key: 'phone', label: 'Contact Number', visible: true },
@@ -121,6 +121,8 @@ interface CandidateTableProps {
     onInitialScreening: (candidate: Candidate) => void;
     onStatusChange: (candidateId: string, status: Candidate['status']) => void;
     onInterviewStatusChange: (candidateId: string, status: Candidate['interviewStatus']) => void;
+    columns?: Column[];
+    onColumnToggle?: (key: string) => void;
 }
 
 export function CandidateTable({
@@ -132,15 +134,21 @@ export function CandidateTable({
     onReject,
     onInitialScreening,
     onStatusChange,
-    onInterviewStatusChange
+    onInterviewStatusChange,
+    columns: externalColumns,
+    onColumnToggle
 }: CandidateTableProps) {
-    // Use a version key to force reset columns if defaultColumns change significantly
-    const [columns, setColumns] = useState<Column[]>(defaultColumns);
+    // Use external columns if provided, otherwise internal state
+    const [internalColumns, setInternalColumns] = useState<Column[]>(defaultColumns);
+    const columns = externalColumns || internalColumns;
 
     // Reset columns if the default columns definition changes (useful for HMR)
     useEffect(() => {
-        setColumns(defaultColumns);
-    }, []);
+        if (!externalColumns) {
+            setInternalColumns(defaultColumns);
+        }
+    }, [externalColumns]);
+
     const [selectedCandidates, setSelectedCandidates] = useState<string[]>([]);
     const [sortColumn, setSortColumn] = useState<string>('appliedAt');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
@@ -205,11 +213,15 @@ export function CandidateTable({
 
 
     const toggleColumn = (key: string) => {
-        setColumns(cols =>
-            cols.map(col =>
-                col.key === key ? { ...col, visible: !col.visible } : col
-            )
-        );
+        if (onColumnToggle) {
+            onColumnToggle(key);
+        } else {
+            setInternalColumns(cols =>
+                cols.map(col =>
+                    col.key === key ? { ...col, visible: !col.visible } : col
+                )
+            );
+        }
     };
 
     const toggleSelectAll = () => {
@@ -276,39 +288,49 @@ export function CandidateTable({
 
     return (
         <div className="bg-card border rounded-lg overflow-hidden shadow-sm">
-            {/* Table Header Actions */}
-            <div className="flex items-center justify-between p-4 border-b border-border bg-muted/40">
-                <div className="flex items-center gap-2">
-                    {selectedCandidates.length > 0 && (
-                        <span className="text-sm text-muted-foreground font-medium">
-                            {selectedCandidates.length} selected
-                        </span>
-                    )}
+            {/* Table Header Actions - hide if columns are managed externally since the original dropdown was here */}
+            {!externalColumns && (
+                <div className="flex items-center justify-between p-4 border-b border-border bg-muted/40">
+                    <div className="flex items-center gap-2">
+                        {selectedCandidates.length > 0 && (
+                            <span className="text-sm text-muted-foreground font-medium">
+                                {selectedCandidates.length} selected
+                            </span>
+                        )}
+                    </div>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm" className="gap-2 bg-background">
+                                <Columns className="w-4 h-4" />
+                                Columns
+                                <ChevronDown className="w-3 h-3" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56 max-h-96 overflow-y-auto">
+                            <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            {columns.filter(c => c.key !== 'actions').map(column => (
+                                <DropdownMenuCheckboxItem
+                                    key={column.key}
+                                    checked={column.visible}
+                                    onCheckedChange={() => toggleColumn(column.key)}
+                                    onSelect={(e) => e.preventDefault()}
+                                >
+                                    {column.label}
+                                </DropdownMenuCheckboxItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="gap-2 bg-background">
-                            <Columns className="w-4 h-4" />
-                            Columns
-                            <ChevronDown className="w-3 h-3" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56 max-h-96 overflow-y-auto">
-                        <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        {columns.filter(c => c.key !== 'actions').map(column => (
-                            <DropdownMenuCheckboxItem
-                                key={column.key}
-                                checked={column.visible}
-                                onCheckedChange={() => toggleColumn(column.key)}
-                                onSelect={(e) => e.preventDefault()}
-                            >
-                                {column.label}
-                            </DropdownMenuCheckboxItem>
-                        ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
+            )}
+            {/* Show just selection count if columns are external and candidates selected */}
+            {externalColumns && selectedCandidates.length > 0 && (
+                <div className="flex items-center justify-between p-4 border-b border-border bg-muted/40">
+                    <span className="text-sm text-muted-foreground font-medium">
+                        {selectedCandidates.length} selected
+                    </span>
+                </div>
+            )}
 
             {/* Top Scrollbar (Synchronized) */}
             <div

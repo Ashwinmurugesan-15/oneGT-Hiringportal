@@ -354,41 +354,7 @@ Wishing you success ahead, and we appreciate your interest in GuhaTek.
 
 Sincerely,
 GuhaTek Recruitment Team`
-        },
-        {
-            id: 'user_invite',
-            name: 'User Invitation',
-            subject: 'Invitation to join HireFlow - [Role]',
-            body: `Dear [User Name],
-
-You have been added as a [Role] to the HireFlow Recruitment Portal.
-
-Your Access Details:
-━━━━━━━━━━━━━━━━━━━━━
-📧 Email: [Email]
-👤 Role: [Role]
-🔐 Login: Sign in with your Google account
-
-Getting Started:
-━━━━━━━━━━━━━━━━━━━━━
-1. Click the Sign In button below
-2. Use your Google account to authenticate
-3. Start using HireFlow!
-
-🔗 Sign In: [Portal Link]
-
-Your Permissions:
-━━━━━━━━━━━━━━━━━━━━━
-[Permissions List]
-
-If you have any questions or need assistance, please contact the Super Admin.
-
-Best regards,
-HireFlow Team
-
----
-Note: This is an automated email from HireFlow.`
-        },
+        }
     ]);
 
     const addCandidate = async (candidate: Candidate) => {

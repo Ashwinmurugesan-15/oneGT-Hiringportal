@@ -8,11 +8,22 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Search, Filter, X } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuCheckboxItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Search, Filter, X, Columns as ColumnsIcon, ChevronDown } from 'lucide-react';
 import { CandidateStatus } from '@/types/recruitment';
+import { Column } from './CandidateTable';
 
 interface CandidateFiltersProps {
     onFilterChange: (filters: FilterState) => void;
+    columns?: Column[];
+    onColumnToggle?: (key: string) => void;
 }
 
 export interface FilterState {
@@ -92,7 +103,7 @@ const feedbackFilterOptions = [
     { value: 'has_round2', label: 'Round 2 Feedback' },
 ];
 
-export function CandidateFilters({ onFilterChange }: CandidateFiltersProps) {
+export function CandidateFilters({ onFilterChange, columns, onColumnToggle }: CandidateFiltersProps) {
     const [filters, setFilters] = useState<FilterState>({
         search: '',
         status: 'all',
@@ -221,6 +232,35 @@ export function CandidateFilters({ onFilterChange }: CandidateFiltersProps) {
                         ))}
                     </SelectContent>
                 </Select>
+
+                {/* Columns Dropdown */}
+                {columns && onColumnToggle && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm" className="gap-2 bg-background h-10 w-[140px] px-3 font-normal text-muted-foreground justify-between">
+                                <div className="flex items-center gap-2">
+                                    <ColumnsIcon className="w-4 h-4" />
+                                    <span>Columns</span>
+                                </div>
+                                <ChevronDown className="w-4 h-4 opacity-50" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56 max-h-96 overflow-y-auto">
+                            <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            {columns.filter(c => c.key !== 'actions').map(column => (
+                                <DropdownMenuCheckboxItem
+                                    key={column.key}
+                                    checked={column.visible}
+                                    onCheckedChange={() => onColumnToggle(column.key)}
+                                    onSelect={(e) => e.preventDefault()}
+                                >
+                                    {column.label}
+                                </DropdownMenuCheckboxItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
 
                 {/* Clear Filters Button */}
                 {hasActiveFilters && (

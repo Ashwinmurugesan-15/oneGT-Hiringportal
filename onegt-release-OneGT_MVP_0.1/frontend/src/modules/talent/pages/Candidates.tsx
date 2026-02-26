@@ -13,7 +13,7 @@ import { useAuth } from '@/context/AuthContext';
 
 // Components
 import { CandidateFilters, FilterState } from '@/components/candidates/CandidateFilters';
-import { CandidateTable } from '@/components/candidates/CandidateTable';
+import { CandidateTable, Column, defaultColumns } from '@/components/candidates/CandidateTable';
 
 // Dialogs
 import { CandidateProfileDialog } from '@/components/dialogs/CandidateProfileDialog';
@@ -101,6 +101,17 @@ const Candidates = () => {
       }));
     }
   }, [searchParams]);
+
+  // Columns State
+  const [columns, setColumns] = useState<Column[]>(defaultColumns);
+
+  const handleColumnToggle = (key: string) => {
+    setColumns(cols =>
+      cols.map(col =>
+        col.key === key ? { ...col, visible: !col.visible } : col
+      )
+    );
+  };
 
   // Dialog States
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
@@ -647,7 +658,11 @@ const Candidates = () => {
 
         {/* Filters and Actions Bar */}
         <div className="flex flex-col gap-2">
-          <CandidateFilters onFilterChange={setFilters} />
+          <CandidateFilters
+            onFilterChange={setFilters}
+            columns={columns}
+            onColumnToggle={handleColumnToggle}
+          />
         </div>
 
         {/* Table */}
@@ -661,6 +676,8 @@ const Candidates = () => {
           onInitialScreening={handleInitialScreening}
           onStatusChange={handleStatusUpdate}
           onInterviewStatusChange={updateInterviewStatus}
+          columns={columns}
+          onColumnToggle={handleColumnToggle}
         />
 
         {/* Dialogs */}
