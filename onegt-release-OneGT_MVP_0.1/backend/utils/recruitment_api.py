@@ -21,7 +21,13 @@ TOKEN_LIFETIME_S = 50 * 60  # 50 minutes
 
 _cached_token: Optional[str] = None
 _token_expiry: float = 0.0
-_token_lock = asyncio.Lock()
+_token_lock = None
+
+def get_token_lock():
+    global _token_lock
+    if _token_lock is None:
+        _token_lock = asyncio.Lock()
+    return _token_lock
 
 
 def _get_config() -> dict:
@@ -43,7 +49,7 @@ async def _get_auth_token() -> str:
     if cfg["use_mock"]:
         return f"mock-token-{int(time.time())}"
 
-    async with _token_lock:
+    async with get_token_lock():
         if _cached_token and time.time() < _token_expiry:
             return _cached_token
 
