@@ -17,7 +17,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ["var(--font-inter)", "sans-serif", "Inter", "system-ui"],
+        brand: ["'Zalando Sans Expanded'", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",

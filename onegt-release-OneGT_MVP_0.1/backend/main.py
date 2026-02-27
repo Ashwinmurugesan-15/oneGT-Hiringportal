@@ -42,6 +42,10 @@ from routers.crms import leads as crms_leads, customers as crms_customers, oppor
 # Import Talent routers
 from routers.talent import candidates as talent_candidates, demands as talent_demands, interviews as talent_interviews, email as talent_email
 
+# Import Assessment routers
+from routers.assessment import assessments as assessment_router, admin as assessment_admin, candidate as assessment_candidate, examiner as assessment_examiner, learning as assessment_learning
+from utils.assessment_db import init_db
+
 # ─────────────────────────────────────────────
 # Startup connectivity check
 # ─────────────────────────────────────────────
@@ -145,6 +149,10 @@ from contextlib import asynccontextmanager
 async def lifespan(app: FastAPI):
     # Run on startup
     await _check_external_apis()
+    try:
+        init_db()
+    except Exception as e:
+        logger.error(f"Failed to initialize assessment database: {e}")
     yield
     # Run on shutdown (nothing needed)
 
@@ -229,6 +237,13 @@ app.include_router(talent_candidates.router, prefix="/api/talent", tags=["Talent
 app.include_router(talent_demands.router, prefix="/api/talent", tags=["Talent - Demands"])
 app.include_router(talent_interviews.router, prefix="/api/talent", tags=["Talent - Interviews"])
 app.include_router(talent_email.router, prefix="/api/talent", tags=["Talent - Email"])
+
+# Assessment routers
+app.include_router(assessment_router.router, prefix="/api/assessment", tags=["Assessment"])
+app.include_router(assessment_candidate.router, prefix="/api/assessment/candidate", tags=["Assessment - Candidate"])
+app.include_router(assessment_examiner.router, prefix="/api/assessment/examiner", tags=["Assessment - Examiner"])
+app.include_router(assessment_admin.router, prefix="/api/assessment/admin", tags=["Assessment - Admin"])
+app.include_router(assessment_learning.router, prefix="/api/assessment/learning", tags=["Assessment - Learning"])
 
 # CRMS routers
 app.include_router(crms_leads.router, prefix="/api")

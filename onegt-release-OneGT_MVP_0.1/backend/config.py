@@ -72,5 +72,8 @@ class Settings:
     GOOGLE_TOKEN_URI: str = os.getenv("GOOGLE_TOKEN_URI", "https://oauth2.googleapis.com/token")
     GOOGLE_REFRESH_TOKEN: str = os.getenv("GOOGLE_REFRESH_TOKEN", "")
     SMTP_USE_OAUTH2: bool = os.getenv("SMTP_USE_OAUTH2", "false").lower() == "true"
+    
+    # Assessment Database (PostgreSQL)
+    ASSESSMENT_DATABASE_URL: str = os.getenv("ASSESSMENT_DATABASE_URL", "postgresql://assessment_app_user:assessment_pass_2024@localhost:5432/assessment_engine")
 
 settings = Settings()
