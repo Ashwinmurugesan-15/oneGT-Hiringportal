@@ -257,8 +257,10 @@ export function CandidateTable({
 
         // Handle nested or specific field logic if needed
         if (sortColumn === 'appliedAt') {
-            aVal = new Date(aVal).getTime();
-            bVal = new Date(bVal).getTime();
+            const d1 = new Date(aVal);
+            const d2 = new Date(bVal);
+            aVal = !isNaN(d1.getTime()) ? d1.getTime() : 0;
+            bVal = !isNaN(d2.getTime()) ? d2.getTime() : 0;
         }
 
         if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
@@ -387,15 +389,15 @@ export function CandidateTable({
                         </tr>
                     </thead>
                     <tbody>
-                        {sortedCandidates.slice((currentPage - 1) * 10, currentPage * 10).map((candidate) => (
+                        {sortedCandidates.slice((currentPage - 1) * 10, currentPage * 10).map((candidate, index) => (
                             <tr
-                                key={candidate.id}
+                                key={candidate.id || `candidate-${index}`}
                                 className="group/row hover:bg-muted/50 transition-colors border-b border-border last:border-0 cursor-pointer"
                                 onClick={() => onViewCandidate(candidate)}
                             >
                                 <td className="w-12 p-2 align-middle sticky left-0 z-20 !bg-card border-b border-border group-hover/row:!bg-muted shadow-[1px_0_0_0_rgba(0,0,0,0.1)] text-center">
-                                    <span className="text-sm font-medium text-primary" title={candidate.id}>
-                                        {candidate.id.substring(0, 8)}...
+                                    <span className="text-sm font-medium text-primary" title={candidate.id || ''}>
+                                        {candidate.id ? `${candidate.id.substring(0, 8)}...` : 'N/A'}
                                     </span>
                                 </td>
                                 {visibleColumns.map(column => {
@@ -435,14 +437,15 @@ export function CandidateTable({
                                                     onboarded: 'text-emerald-800',
                                                 };
                                                 const nameColor = statusTextColors[candidate.status] || 'text-foreground';
+                                                const displayName = candidate.name || 'Unknown Candidate';
                                                 return (
                                                     <div className="flex items-center gap-3">
                                                         <Avatar className="w-9 h-9">
                                                             <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-                                                                {(candidate.name || 'Unknown').split(' ').map((n: string) => n[0]).join('')}
+                                                                {displayName.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
                                                             </AvatarFallback>
                                                         </Avatar>
-                                                        <span className={cn("font-bold text-sm", nameColor)}>{candidate.name}</span>
+                                                        <span className={cn("font-bold text-sm", nameColor)}>{displayName}</span>
                                                     </div>
                                                 );
                                             })()}
@@ -476,7 +479,7 @@ export function CandidateTable({
                                             )}
                                             {column.key === 'skills' && (
                                                 <div className="flex flex-wrap gap-1 max-w-[200px]">
-                                                    {candidate.skills?.slice(0, 3).map(skill => (
+                                                    {Array.isArray(candidate.skills) && candidate.skills.slice(0, 3).map(skill => (
                                                         <span
                                                             key={skill}
                                                             className="px-2 py-0.5 bg-secondary text-secondary-foreground text-xs rounded-md"
@@ -493,7 +496,7 @@ export function CandidateTable({
                                             )}
                                             {column.key === 'certifications' && (
                                                 <div className="flex flex-wrap gap-1 max-w-[200px]">
-                                                    {candidate.certifications?.slice(0, 1).map(cert => (
+                                                    {Array.isArray(candidate.certifications) && candidate.certifications.slice(0, 1).map(cert => (
                                                         <span
                                                             key={cert}
                                                             className="px-2 py-0.5 border text-muted-foreground text-xs rounded-md"
@@ -548,7 +551,10 @@ export function CandidateTable({
                                             )}
                                             {column.key === 'appliedAt' && (
                                                 <span className="text-sm text-muted-foreground">
-                                                    {format(new Date(candidate.appliedAt), 'MMM d, yyyy')}
+                                                    {(() => {
+                                                        const d = new Date(candidate.appliedAt);
+                                                        return !isNaN(d.getTime()) ? format(d, 'MMM d, yyyy') : 'N/A';
+                                                    })()}
                                                 </span>
                                             )}
                                             {column.key === 'currentCompany' && (
@@ -739,7 +745,9 @@ export function CandidateTable({
                                                 </span>
                                             )}
                                             {!['name', 'email', 'phone', 'resumeUrl', 'interestPosition', 'currentRole', 'skills', 'certifications', 'experience', 'status', 'source', 'appliedAt', 'currentCompany', 'location', 'locationPreference', 'currentCTC', 'expectedCTC', 'noticePeriod', 'isServingNotice', 'isImmediateJoiner', 'hasOtherOffers', 'otherOfferCTC', 'linkedInProfile', 'screeningFeedback', 'interviewStatus', 'referredBy', 'comments', 'round1Recommendation', 'round2Recommendation', 'clientRecommendation', 'offeredCTC', 'offeredPosition', 'actions'].includes(column.key) && (
-                                                <span className="text-sm text-foreground">{(candidate as any)[column.key] || '-'}</span>
+                                                <span className="text-sm text-foreground">
+                                                    {candidate ? (candidate as any)[column.key] || '-' : '-'}
+                                                </span>
                                             )}
                                             {
                                                 column.key === 'actions' && (

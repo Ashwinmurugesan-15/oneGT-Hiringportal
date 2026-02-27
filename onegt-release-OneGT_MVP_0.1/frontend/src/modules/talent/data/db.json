@@ -22,7 +22,7 @@
     {
       "title": "Senior Engineers",
       "role": "Engineer",
-      "experience": "2-4",
+      "experience": "2-6",
       "location": "Chennai",
       "openings": 10,
       "skills": [
@@ -30,7 +30,7 @@
         "Python",
         "CSS"
       ],
-      "status": "open",
+      "status": "closed",
       "createdBy": "Current User",
       "id": "1770615787098",
       "createdAt": "2026-02-09T05:43:07.098Z",
@@ -49,7 +49,7 @@
         "java",
         "python"
       ],
-      "status": "open",
+      "status": "closed",
       "createdBy": "Current User",
       "createdAt": "2026-02-10T05:56:04.276Z",
       "applicants": 0,
@@ -60,7 +60,7 @@
       "id": "1772083329797",
       "title": "Senior Devops Engineer",
       "role": "Devops Engineer",
-      "experience": "5-8",
+      "experience": "5-7",
       "location": "Coimbatore",
       "openings": 10,
       "skills": [
@@ -75,6 +75,52 @@
       "createdBy": "Current User",
       "rejected": 0,
       "createdAt": "2026-02-26T05:22:20.000Z",
+      "applicants": 0,
+      "interviewed": 0,
+      "offers": 0
+    },
+    {
+      "id": "1772113707655",
+      "title": "Test",
+      "createdAt": "2026-02-26T13:48:27.000Z"
+    },
+    {
+      "id": "1772119163757",
+      "title": "devops",
+      "role": "devops",
+      "experience": "4-7",
+      "location": "chennai",
+      "openings": 10,
+      "skills": [
+        "Aws",
+        "s3",
+        "docker"
+      ],
+      "status": "open",
+      "createdBy": "Current User",
+      "rejected": 0,
+      "createdAt": "2026-02-26T15:23:23.000Z",
+      "applicants": 0,
+      "interviewed": 0,
+      "offers": 0
+    },
+    {
+      "id": "1772184293580",
+      "title": "test ",
+      "role": "Devops ",
+      "experience": "3-4",
+      "location": "chennai",
+      "openings": 12,
+      "skills": [
+        "AWS",
+        "Docker",
+        "grafana",
+        "python"
+      ],
+      "status": "open",
+      "createdBy": "Current User",
+      "rejected": 0,
+      "createdAt": "2026-02-27T09:25:02.000Z",
       "applicants": 0,
       "interviewed": 0,
       "offers": 0
@@ -175,7 +221,11 @@
       "currentlyInNotice": false,
       "immediateJoiner": false,
       "linkedinProfile": "",
-      "otherOffersInHand": false
+      "otherOffersInHand": false,
+      "currentRound": 3,
+      "interviewStatus": "completed",
+      "round2Feedback": "{\"communication\":\"good\",\"technicalAssessment\":\"good\",\"problemSolving\":\"good\",\"overallPotential\":\"good\",\"recommendation\":\"selected \",\"comments\":\"\",\"ctc\":\"12lpa\"}",
+      "round2Recommendation": "selected "
     },
     {
       "id": "bec7e764-75c2-4138-98f0-e7c26f4a2d4a",
@@ -195,12 +245,209 @@
     },
     {
       "id": "1d7f60c6-aa8b-4dc8-9315-4b39750bf5ef",
-      "status": "interview_scheduled",
-      "interviewStatus": "tech_inter_sched",
-      "currentRound": 1,
+      "status": "interview_completed",
+      "interviewStatus": "completed",
+      "currentRound": 2,
       "name": "Unknown",
       "email": "",
-      "appliedAt": "2026-02-24T06:01:05.000Z"
+      "appliedAt": "2026-02-24T06:01:05.000Z",
+      "round1Feedback": "{\"communication\":\"good\",\"technicalAssessment\":\"good\",\"problemSolving\":\"goog\",\"overallPotential\":\"goog\",\"comments\":\"\",\"recommendation\":\"proceed_to_round2\"}",
+      "round1Recommendation": "proceed_to_round2"
+    },
+    {
+      "id": "dc8d99cc-1a33-4152-bb4e-27da2f99cb5c",
+      "fullName": "RAM",
+      "email": "r@gmail.com",
+      "contactNumber": "6789876543",
+      "interestedPosition": "Senior Site Reliability Engineer",
+      "currentRole": "Developer",
+      "currentOrganization": "Tech",
+      "totalExperience": 5,
+      "currentLocation": "",
+      "locationPreference": "coimbatore",
+      "currentCTC": "0",
+      "expectedCTC": "0",
+      "noticePeriod": "",
+      "currentlyInNotice": false,
+      "immediateJoiner": false,
+      "linkedinProfile": "",
+      "otherOffersInHand": false,
+      "certifications": "",
+      "referredBy": "",
+      "name": "RAM",
+      "status": "applied",
+      "appliedAt": "2026-02-26T10:49:19.000Z"
+    },
+    {
+      "id": "288f6979-4403-411f-b49c-11a0861a9d37",
+      "fullName": "samp",
+      "email": "s@gmail.com",
+      "contactNumber": "4556789876",
+      "interestedPosition": "Senior Site Reliability Engineer",
+      "currentRole": "",
+      "currentOrganization": "",
+      "totalExperience": 0,
+      "currentLocation": "coimbatore",
+      "locationPreference": "chennai",
+      "currentCTC": "0",
+      "expectedCTC": "0",
+      "noticePeriod": "",
+      "currentlyInNotice": false,
+      "immediateJoiner": false,
+      "linkedinProfile": "",
+      "otherOffersInHand": false,
+      "certifications": "",
+      "referredBy": "",
+      "name": "samp",
+      "status": "applied",
+      "appliedAt": "2026-02-26T11:12:23.000Z"
+    },
+    {
+      "id": "9408ee6c-04e5-47b2-963f-85834aa76bdb",
+      "fullName": "test candidate",
+      "email": "ta@gmail.com",
+      "contactNumber": "6789034567",
+      "interestedPosition": "Performance Engineer",
+      "currentRole": "Devops",
+      "currentOrganization": "",
+      "totalExperience": 0,
+      "currentLocation": "chennai ",
+      "locationPreference": "chennai",
+      "currentCTC": "12",
+      "expectedCTC": "15",
+      "noticePeriod": "15days",
+      "currentlyInNotice": false,
+      "immediateJoiner": false,
+      "linkedinProfile": "",
+      "otherOffersInHand": false,
+      "certifications": [
+        "aws"
+      ],
+      "skills": [
+        "Java"
+      ],
+      "referredBy": "nil",
+      "name": "test candidate",
+      "status": "applied",
+      "appliedAt": "2026-02-26T11:58:49.000Z"
+    },
+    {
+      "id": "440aa061-9a85-4a4f-9c0d-28cedb35345e",
+      "fullName": "Test API User",
+      "email": "ashlog559@gmail.com",
+      "contactNumber": "9876543210",
+      "interestedPosition": "Site Reliability Engineer",
+      "currentRole": "",
+      "currentOrganization": "",
+      "totalExperience": 2,
+      "currentLocation": "Bangalore",
+      "locationPreference": "",
+      "currentCTC": "0",
+      "expectedCTC": "0",
+      "noticePeriod": "",
+      "currentlyInNotice": false,
+      "immediateJoiner": false,
+      "linkedinProfile": "",
+      "otherOffersInHand": false,
+      "certifications": [],
+      "skills": [
+        "SRE"
+      ],
+      "referredBy": "",
+      "name": "Test API Use",
+      "status": "applied",
+      "appliedAt": "2026-02-26T12:44:37.000Z"
+    },
+    {
+      "name": "Test",
+      "email": "t@t.com"
+    },
+    {
+      "id": "fake",
+      "fullName": "X",
+      "name": "X",
+      "email": "",
+      "status": "applied",
+      "appliedAt": "2026-02-26T13:48:27.000Z"
+    },
+    {
+      "id": "6a7b5fb3-1e2b-496e-846b-7729b70a40b5",
+      "fullName": "RAM",
+      "email": "ra@gmail.com",
+      "contactNumber": "6789876543",
+      "interestedPosition": "senior-site-reliability-engineer",
+      "currentRole": "",
+      "currentOrganization": "",
+      "totalExperience": 5,
+      "currentLocation": "Remote",
+      "locationPreference": "",
+      "currentCTC": "0",
+      "expectedCTC": "0",
+      "noticePeriod": "",
+      "currentlyInNotice": false,
+      "immediateJoiner": false,
+      "linkedinProfile": "",
+      "otherOffersInHand": false,
+      "certifications": [],
+      "skills": [
+        "Senior Site Reliability Engineer"
+      ],
+      "referredBy": "",
+      "name": "RAM",
+      "status": "applied",
+      "appliedAt": "2026-02-27T08:11:23.000Z"
+    },
+    {
+      "id": "6e749a71-648d-4513-8103-6128ac880e4f",
+      "fullName": "Meha",
+      "email": "mohamma@guhatek.com",
+      "contactNumber": "9292929292",
+      "interestedPosition": "site-reliability-engineer",
+      "currentRole": "",
+      "currentOrganization": "",
+      "totalExperience": 10,
+      "currentLocation": "Chennai",
+      "locationPreference": "",
+      "currentCTC": "0",
+      "expectedCTC": "0",
+      "noticePeriod": "",
+      "currentlyInNotice": false,
+      "immediateJoiner": false,
+      "linkedinProfile": "",
+      "otherOffersInHand": false,
+      "certifications": [],
+      "skills": [
+        "Site Reliability Engineer"
+      ],
+      "referredBy": "",
+      "name": "Meha",
+      "status": "applied",
+      "appliedAt": "2026-02-27T08:17:01.000Z"
+    },
+    {
+      "id": "6ed9a0ff-49d7-42be-9277-71365296f7b7",
+      "fullName": "jan",
+      "email": "J@gmail.com",
+      "contactNumber": "8903446789",
+      "interestedPosition": "Senior Site Reliability Engineer",
+      "currentRole": "",
+      "currentOrganization": "",
+      "totalExperience": 5,
+      "currentLocation": "",
+      "locationPreference": "",
+      "currentCTC": "0",
+      "expectedCTC": "0",
+      "noticePeriod": "",
+      "currentlyInNotice": false,
+      "immediateJoiner": false,
+      "linkedinProfile": "",
+      "otherOffersInHand": false,
+      "certifications": [],
+      "skills": [],
+      "referredBy": "",
+      "name": "jan",
+      "status": "applied",
+      "appliedAt": "2026-02-27T09:22:59.000Z"
     }
   ],
   "interviews": [
@@ -654,9 +901,15 @@
       "interviewerName": "Test Interviewer",
       "interviewerEmail": "interviewer@example.com",
       "scheduledAt": "2026-02-11T07:25:46.749Z",
-      "status": "scheduled",
+      "status": "completed",
       "meetLink": "https://meet.google.com/test-link",
-      "createdAt": "2026-02-11T06:25:46.915Z"
+      "createdAt": "2026-02-11T06:25:46.915Z",
+      "feedback": {
+        "technicalRating": 0,
+        "communicationRating": 0,
+        "comments": "Communication: good\nTechnical: good\nProblem-Solving: good\nOverall: good\nAssessment: \nRecommendation: selected \nCTC: 12lpa",
+        "decision": "move_forward"
+      }
     },
     {
       "id": "1770791198239",
@@ -667,9 +920,15 @@
       "interviewerName": "Ashwin Murugesan",
       "interviewerEmail": "ashlog559@gmail.com",
       "scheduledAt": "2026-02-11T07:26:38.053Z",
-      "status": "scheduled",
+      "status": "completed",
       "meetLink": "https://meet.google.com/test-link",
-      "createdAt": "2026-02-11T06:26:38.239Z"
+      "createdAt": "2026-02-11T06:26:38.239Z",
+      "feedback": {
+        "technicalRating": 0,
+        "communicationRating": 0,
+        "comments": "Communication: good\nTechnical: good\nProblem-Solving: good\nOverall: good\nAssessment: \nRecommendation: selected \nCTC: 12lpa",
+        "decision": "move_forward"
+      }
     },
     {
       "id": "1770792770444",
@@ -752,8 +1011,20 @@
       "interviewerName": "san",
       "interviewerEmail": "ashlog559@gmail.com",
       "meetLink": "http://localhost:8080/",
-      "status": "scheduled",
-      "createdAt": "2026-02-24T06:01:04.000Z"
+      "status": "completed",
+      "createdAt": "2026-02-24T06:01:04.000Z",
+      "feedback": {
+        "technicalRating": 0,
+        "communicationRating": 0,
+        "comments": "Communication: good\nTechnical: good\nProblem-Solving: goog\nOverall: goog\nAssessment: ",
+        "decision": "move_forward"
+      }
+    },
+    {
+      "id": "1772113717397",
+      "candidateId": "x",
+      "round": "r1",
+      "createdAt": "2026-02-26T13:48:37.000Z"
     }
   ]
 }

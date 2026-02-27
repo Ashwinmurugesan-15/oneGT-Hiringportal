@@ -22,12 +22,13 @@ const statusConfig: Record<CandidateStatus, { label: string; className: string }
 };
 
 export const StatusBadge = ({ status, className, extraLabel }: StatusBadgeProps & { extraLabel?: string }) => {
-  const config = statusConfig[status];
+  const normalizedStatus = (status || 'applied').toLowerCase() as CandidateStatus;
+  const config = statusConfig[normalizedStatus] || statusConfig.applied;
 
   return (
     <Badge className={cn('border font-medium', config.className, className)}>
       {config.label}
-      {status === 'rejected' && extraLabel && <span className="ml-1 opacity-75">({extraLabel})</span>}
+      {normalizedStatus === 'rejected' && extraLabel && <span className="ml-1 opacity-75">({extraLabel})</span>}
     </Badge>
   );
 };

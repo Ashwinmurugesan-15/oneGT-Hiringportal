@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { DemandCard } from '@/components/dashboard/DemandCard';
 import { useDemands } from '@/context/DemandsContext';
+import { useAuth } from '@/context/AuthContext';
 import { Demand } from '@/types/recruitment';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,7 +25,7 @@ import { ConfirmDialog } from '@/components/dialogs/ConfirmDialog';
 import { toast } from 'sonner';
 
 const Demands = () => {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { user } = useAuth();
   // Use global demands state
   const { demands, addDemand, updateDemand, closeDemand, deleteDemand } = useDemands();
@@ -45,7 +45,7 @@ const Demands = () => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   // Deep linking
-  const searchParams = useSearchParams();
+  const [searchParams] = useSearchParams();
   const demandId = searchParams.get('demandId');
 
   useEffect(() => {
@@ -132,7 +132,7 @@ const Demands = () => {
           </div>
           <div className="flex gap-2">
             {demandId && (
-              <Button variant="outline" onClick={() => router.push('/demands')}>
+              <Button variant="outline" onClick={() => navigate('/talent/demands')}>
                 Show All Demands
               </Button>
             )}
@@ -217,10 +217,10 @@ const Demands = () => {
               onClose={demand.status !== 'deleted' ? () => handleCloseDemand(demand) : undefined}
               onDelete={demand.status !== 'deleted' ? () => handleDeleteDemand(demand) : undefined}
               showActions={demand.status !== 'deleted'}
-              onViewApplied={() => router.push(`/candidates?demandId=${demand.id}&status=applied`)}
-              onViewInterviewed={() => router.push(`/candidates?demandId=${demand.id}&status=interview_scheduled,interview_completed`)}
-              onViewRejected={() => router.push(`/candidates?demandId=${demand.id}&status=rejected`)}
-              onViewOffers={() => router.push(`/candidates?demandId=${demand.id}&status=offer_rolled,offer_accepted`)}
+              onViewApplied={() => navigate(`/talent/candidates?demandId=${demand.id}&status=applied`)}
+              onViewInterviewed={() => navigate(`/talent/candidates?demandId=${demand.id}&status=interview_scheduled,interview_completed`)}
+              onViewRejected={() => navigate(`/talent/candidates?demandId=${demand.id}&status=rejected`)}
+              onViewOffers={() => navigate(`/talent/candidates?demandId=${demand.id}&status=offer_rolled,offer_accepted`)}
             />
           ))}
         </div>

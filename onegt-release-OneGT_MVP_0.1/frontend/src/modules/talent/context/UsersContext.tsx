@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, ReactNode, useCallback, useEffect, useRef } from 'react';
 import { User, UserRole, UserPermissions, EmailTemplate } from '@/types/recruitment';
+import { useAuth } from './AuthContext';
 
 interface UsersContextType {
     users: User[];
@@ -79,6 +80,7 @@ const saveUsersToStorage = (users: User[]) => {
 
 export const UsersProvider = ({ children }: { children: ReactNode }) => {
     const [users, setUsers] = useState<User[]>(initialUsers);
+    const { getAuthHeader } = useAuth();
     const [isLoaded, setIsLoaded] = useState(false);
     const usersRef = useRef<User[]>(users);
 
@@ -185,7 +187,10 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
 
             const res = await fetch('/api/email/send', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeader()
+                },
                 body: JSON.stringify({
                     to: user.email,
                     subject,

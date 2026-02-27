@@ -28,7 +28,8 @@ import {
     Handshake,
     Phone,
     Palette,
-    Settings
+    Settings,
+    Shield
 } from 'lucide-react';
 
 // Capability configurations
@@ -172,9 +173,17 @@ export const CAPABILITY_MENUS = {
             ]
         },
         {
+            section: 'Portals', items: [
+                { to: '/assessment/admin', icon: Shield, label: 'Admin Portal', roles: ['Admin'] },
+                { to: '/assessment/examiner', icon: BookOpen, label: 'Examiner Portal', roles: ['Admin', 'Examiner'] },
+                { to: '/assessment/candidate', icon: GraduationCap, label: 'Candidate Portal', roles: ['Admin', 'Candidate'] }
+            ]
+        },
+        {
             section: 'Assessments', items: [
                 { to: '/assessment/list', icon: ClipboardCheck, label: 'All Assessments' },
                 { to: '/assessment/create', icon: FileText, label: 'Create Assessment' },
+                { to: '/assessment/learning', icon: BookOpen, label: 'Learning Materials' },
                 { to: '/assessment/questions', icon: FileQuestion, label: 'Question Bank' }
             ]
         },

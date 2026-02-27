@@ -49,7 +49,18 @@ import {
 import TalentModuleWrapper from './modules/talent/TalentModuleWrapper';
 
 // Assessment Portal Pages
-import { AssessmentDashboard } from './pages/assessment';
+import AssessmentModuleWrapper from './modules/assessment/AssessmentModuleWrapper';
+import AssessmentDashboardSwitcher from './modules/assessment/AssessmentDashboardSwitcher';
+import CreateAssessment from './modules/assessment/components/CreateAssessment';
+import ExaminerDashboard from './modules/assessment/pages/ExaminerDashboard';
+import CandidateDashboard from './modules/assessment/pages/CandidateDashboard';
+import AssessmentDetail from './modules/assessment/pages/AssessmentDetail';
+import TakeAssessment from './modules/assessment/pages/TakeAssessment';
+import AssessmentResult from './modules/assessment/pages/AssessmentResult';
+import LearningResources from './modules/assessment/pages/LearningResources';
+import UserManagement from './modules/assessment/pages/UserManagement';
+import CandidateResultDetail from './modules/assessment/pages/CandidateResultDetail';
+import AdminDashboard from './modules/assessment/pages/AdminDashboard';
 
 // Protected route wrapper that checks authentication
 function ProtectedRoute({ children, requiredRoles = [] }) {
@@ -165,7 +176,7 @@ function AppRoutes() {
         </Route>
       </Route>
 
-      {/* Assessment Portal Placeholders */}
+      {/* Assessment Portal */}
       <Route
         path="/assessment"
         element={
@@ -174,8 +185,20 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<AssessmentDashboard />} />
-        <Route path="*" element={<AssessmentDashboard />} />
+        <Route element={<AssessmentModuleWrapper />}>
+          <Route index element={<AssessmentDashboardSwitcher />} />
+          <Route path="admin" element={<AdminDashboard />} />
+          <Route path="admin/users" element={<UserManagement />} />
+          <Route path="examiner" element={<ExaminerDashboard />} />
+          <Route path="examiner/result/:assessmentId/:userId" element={<CandidateResultDetail />} />
+          <Route path="candidate" element={<CandidateDashboard />} />
+          <Route path="create" element={<CreateAssessment />} />
+          <Route path="manage/:id" element={<AssessmentDetail />} />
+          <Route path="test/:id" element={<TakeAssessment />} />
+          <Route path="test/:id/result" element={<AssessmentResult />} />
+          <Route path="learning" element={<LearningResources />} />
+          <Route path="*" element={<AssessmentDashboardSwitcher />} />
+        </Route>
       </Route>
 
     </Routes>

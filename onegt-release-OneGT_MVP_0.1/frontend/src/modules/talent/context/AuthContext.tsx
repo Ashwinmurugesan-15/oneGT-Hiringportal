@@ -15,12 +15,10 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const { user: mainUser, logout: mainLogout, isAdmin, isManager, isHR, getAuthHeader } = useMainAuth() as any;
+  const { user: mainUser, logout: mainLogout, isAdmin, isManager, isHR, isAssociate, getAuthHeader } = useMainAuth() as any;
 
   const mappedUser = useMemo(() => {
     if (!mainUser) return null;
-
-    const { isAdmin, isManager, isHR, isAssociate } = useMainAuth() as any;
 
     // Map main app roles to talent module roles
     let role: UserRole = 'interviewer';

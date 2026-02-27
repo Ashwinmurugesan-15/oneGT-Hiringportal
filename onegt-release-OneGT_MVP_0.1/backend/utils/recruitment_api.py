@@ -156,7 +156,22 @@ async def insert_application(file_bytes: bytes, filename: str, application_data:
             files={"file": (filename, file_bytes)},
             data={"applicationData": json.dumps(application_data)},
         )
-        resp.raise_for_status()
+        print(f"DEBUG: Guhatek /api/applications response status: {resp.status_code}")
+        print(f"DEBUG: Guhatek /api/applications response body: {resp.text[:2000]}")
+
+        # Parse response body for user-friendly error messages
+        if not resp.is_success:
+            try:
+                error_body = resp.json()
+                error_msg = error_body.get("message", f"Guhatek API error: {resp.status_code}")
+            except Exception:
+                error_msg = f"Guhatek API error: {resp.status_code}"
+            raise httpx.HTTPStatusError(
+                error_msg,
+                request=resp.request,
+                response=resp
+            )
+
         return resp.json()
 
 

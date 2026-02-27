@@ -7,7 +7,7 @@ PATCH /api/candidates/update
 import json
 import time
 import logging
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from fastapi.responses import JSONResponse
 from typing import List
 
@@ -122,6 +122,43 @@ async def get_candidates(current_user: TokenData = Depends(get_current_user)):
         return JSONResponse(content=db.get("candidates", []))
 
 
+@router.post("/candidates/apply", status_code=201)
+@trace_exceptions_async
+async def apply_candidate(
+    file: UploadFile = File(...),
+    applicationData: str = Form(...),
+    current_user: TokenData = Depends(get_current_user)
+):
+    try:
+        print(f"DEBUG: apply_candidate received applicationData type: {type(applicationData)}")
+        app_data = json.loads(applicationData)
+        print(f"DEBUG: Parsed app_data success: {list(app_data.keys())}")
+        
+        file_bytes = await file.read()
+        filename = file.filename or "resume.pdf"
+        print(f"DEBUG: Read file: {filename}, size: {len(file_bytes)}")
+        
+        # Forward to external API
+        print("DEBUG: Forwarding to gapi.insert_application...")
+        result = await gapi.insert_application(file_bytes, filename, app_data)
+        print(f"DEBUG: gapi.insert_application result: {result}")
+        
+        if result and result.get("success"):
+            api_cache.clear(CACHE_KEY)
+            return JSONResponse(content={"success": True, "id": result.get("id"), "message": "Application submitted successfully"}, status_code=201)
+        else:
+            print(f"DEBUG: External API failed with result: {result}")
+            raise HTTPException(400, f"External API failed: {result}")
+    except json.JSONDecodeError as e:
+        print(f"DEBUG: JSONDecodeError: {e}")
+        raise HTTPException(400, "Invalid application data JSON format")
+    except Exception as exc:
+        print(f"DEBUG: Exception in apply_candidate: {exc}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(500, f"Failed to submit application: {exc}")
+
+
 @router.post("/candidates", status_code=201)
 @trace_exceptions_async
 async def add_candidate(candidate: dict, current_user: TokenData = Depends(get_current_user)):
@@ -142,6 +179,34 @@ async def update_candidate(body: dict, current_user: TokenData = Depends(get_cur
     rest = {k: v for k, v in body.items() if k != "id"}
 
     api_updates: dict = {}
+
+    # --- Core profile fields ---
+    field_map = {
+        "fullName": "full_name",
+        "email": "email",
+        "contactNumber": "contact_number",
+        "interestedPosition": "interested_position",
+        "currentRole": "current_role",
+        "currentOrganization": "current_organization",
+        "totalExperience": "total_experience",
+        "currentLocation": "current_location",
+        "locationPreference": "location_preference",
+        "currentCTC": "current_ctc",
+        "expectedCTC": "expected_ctc",
+        "noticePeriod": "notice_period",
+        "currentlyInNotice": "currently_in_notice",
+        "immediateJoiner": "immediate_joiner",
+        "linkedinProfile": "linkedin_profile",
+        "otherOffersInHand": "other_offers_in_hand",
+        "certifications": "certifications",
+        "skills": "skills",
+        "referredBy": "referred_by",
+    }
+    for frontend_key, api_key in field_map.items():
+        if frontend_key in rest:
+            api_updates[api_key] = rest[frontend_key]
+
+    # --- Feedback fields ---
     if rest.get("round1Feedback"):
         api_updates["round1_feedback"] = rest["round1Feedback"]
     if rest.get("round2Feedback"):
@@ -156,12 +221,16 @@ async def update_candidate(body: dict, current_user: TokenData = Depends(get_cur
     if not api_updates.get("client_feedback") and rest.get("clientRecommendation"):
         api_updates["client_feedback"] = json.dumps({"recommendation": rest["clientRecommendation"]})
 
+    # --- Status fields ---
     if rest.get("status"):
         api_updates["application_status"] = rest["status"]
     if rest.get("interviewStatus"):
         api_updates["interview_status"] = rest["interviewStatus"]
 
     try:
+        print(f"DEBUG update_candidate: id={candidate_id}")
+        print(f"DEBUG update_candidate: rest keys={list(rest.keys())}")
+        print(f"DEBUG update_candidate: api_updates={api_updates}")
         await gapi.update_application(candidate_id, api_updates)
         api_cache.clear(CACHE_KEY)
         return {"success": True, **body}

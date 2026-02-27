@@ -99,6 +99,20 @@ export function AuthProvider({ children }) {
         }
     }, []);
 
+    const devBypassLogin = useCallback(async () => {
+        try {
+            const response = await axios.post(`${API_URL}/auth/mock`);
+            const { access_token, user: userData } = response.data;
+            localStorage.setItem('chrms_token', access_token);
+            localStorage.setItem('chrms_user_picture', userData.picture || '');
+            setUser(userData);
+            return { success: true };
+        } catch (error) {
+            console.error('Dev bypass login failed:', error);
+            return { success: false, error: error.response?.data?.detail || 'Dev login failed' };
+        }
+    }, []);
+
     const logout = useCallback(async () => {
         const token = localStorage.getItem('chrms_token');
         if (token) {
@@ -154,6 +168,8 @@ export function AuthProvider({ children }) {
         loading,
         googleClientId,
         login,
+        devLogin: devBypassLogin,
+        devBypassLogin,
         logout,
         isAdmin,
         isHR,

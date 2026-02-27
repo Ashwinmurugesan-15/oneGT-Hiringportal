@@ -60,21 +60,21 @@ export const DemandCard = ({ demand, onViewDetails, onEdit, onClose, onDelete, o
             <div className="flex flex-wrap gap-2 mb-4 text-xs text-muted-foreground">
               <div className="flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
-                <span>{demand.location}</span>
+                <span>{demand.location || 'Not Specified'}</span>
               </div>
               <div className="flex items-center gap-1">
                 <Briefcase className="h-3 w-3" />
-                <span>{demand.experience}</span>
+                <span>{demand.experience || 'Not Specified'}</span>
               </div>
               <div className="flex items-center gap-1">
                 <Users className="h-3 w-3" />
-                <span>{demand.openings} Openings</span>
+                <span>{demand.openings || 0} Openings</span>
               </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Badge className={cn('border', statusColors[demand.status])}>
-              {demand.status === 'on_hold' ? 'On Hold' : demand.status.charAt(0).toUpperCase() + demand.status.slice(1)}
+            <Badge className={cn('border', statusColors[demand.status || 'open'] || statusColors.open)}>
+              {(demand.status || 'open') === 'on_hold' ? 'On Hold' : (demand.status || 'open').charAt(0).toUpperCase() + (demand.status || 'open').slice(1)}
             </Badge>
             {showActions && (
               <DropdownMenu>
@@ -90,7 +90,7 @@ export const DemandCard = ({ demand, onViewDetails, onEdit, onClose, onDelete, o
                   }}>
                     Edit Demand
                   </DropdownMenuItem>
-                  {demand.status === 'open' && (
+                  {(demand.status || 'open') === 'open' && (
                     <DropdownMenuItem onClick={(e) => {
                       e.stopPropagation();
                       onClose?.();
@@ -130,9 +130,9 @@ export const DemandCard = ({ demand, onViewDetails, onEdit, onClose, onDelete, o
           <div className="flex items-center gap-2">
             <Clock className="h-3 w-3" />
             <span>
-              Created: {isValidDate(new Date(demand.createdAt))
+              Created: {demand.createdAt && isValidDate(new Date(demand.createdAt))
                 ? format(new Date(demand.createdAt), 'MMM d, yyyy h:mm a')
-                : 'Invalid Data'}
+                : 'Not Specified'}
             </span>
           </div>
           {demand.reopenedAt && isValidDate(new Date(demand.reopenedAt)) && (
@@ -149,14 +149,14 @@ export const DemandCard = ({ demand, onViewDetails, onEdit, onClose, onDelete, o
             e.stopPropagation();
             onViewApplied?.();
           }}>
-            <p className="text-lg font-semibold text-foreground">{demand.applicants}</p>
+            <p className="text-lg font-semibold text-foreground">{demand.applicants || 0}</p>
             <p className="text-xs text-muted-foreground">Applied</p>
           </div>
           <div className="text-center border-x border-border cursor-pointer hover:text-primary transition-colors" onClick={(e) => {
             e.stopPropagation();
             onViewInterviewed?.();
           }}>
-            <p className="text-lg font-semibold text-foreground">{demand.interviewed}</p>
+            <p className="text-lg font-semibold text-foreground">{demand.interviewed || 0}</p>
             <p className="text-xs text-muted-foreground">Interviewed</p>
           </div>
           <div className="text-center border-r border-border cursor-pointer hover:text-destructive transition-colors" onClick={(e) => {
@@ -170,7 +170,7 @@ export const DemandCard = ({ demand, onViewDetails, onEdit, onClose, onDelete, o
             e.stopPropagation();
             onViewOffers?.();
           }}>
-            <p className="text-lg font-semibold text-foreground">{demand.offers}</p>
+            <p className="text-lg font-semibold text-foreground">{demand.offers || 0}</p>
             <p className="text-xs text-muted-foreground">Offers</p>
           </div>
         </div>

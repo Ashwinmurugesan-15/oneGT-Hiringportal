@@ -30,7 +30,7 @@ import { Interview, Candidate, InterviewRound } from '@/types/recruitment';
 
 import { useRecruitment } from '@/context/RecruitmentContext';
 import { InterviewCalendar } from '@/components/interviews/InterviewCalendar';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 
 const replacePlaceholders = (template: string, data: Record<string, string>) => {
@@ -48,8 +48,8 @@ const countWords = (text: string) => {
 };
 
 const Interviews = () => {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { updateCandidateFeedback, updateCandidateStatus, filteredInterviews: interviews, candidates, updateInterview, emailTemplates, sendEmail } = useRecruitment();
   const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null);

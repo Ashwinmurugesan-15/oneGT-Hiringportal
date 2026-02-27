@@ -2,6 +2,7 @@ import os
 import logging
 import traceback
 import sys
+import asyncio
 from pathlib import Path
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
@@ -39,12 +40,128 @@ from routers.common import auth as auth_router
 from routers.crms import leads as crms_leads, customers as crms_customers, opportunities as crms_opportunities, contacts as crms_contacts, deals as crms_deals, tasks as crms_tasks, calls as crms_calls, dashboard as crms_dashboard, invoices as crms_invoices, invoice_templates as crms_invoice_templates
 
 # Import Talent routers
-from routers.talent import candidates as talent_candidates, demands as talent_demands, interviews as talent_interviews
+from routers.talent import candidates as talent_candidates, demands as talent_demands, interviews as talent_interviews, email as talent_email
+
+# Import Assessment routers
+from routers.assessment import assessments as assessment_router, admin as assessment_admin, candidate as assessment_candidate, examiner as assessment_examiner, learning as assessment_learning
+from utils.assessment_db import init_db
+
+# ─────────────────────────────────────────────
+# Startup connectivity check
+# ─────────────────────────────────────────────
+async def _check_external_apis():
+    """Run at startup: ping each external API and print coloured status."""
+    import httpx
+    from utils.recruitment_api import _get_config
+
+    GREEN  = "\033[92m"
+    RED    = "\033[91m"
+    YELLOW = "\033[93m"
+    BOLD   = "\033[1m"
+    RESET  = "\033[0m"
+
+    print(f"\n{BOLD}{'─'*60}{RESET}")
+    print(f"{BOLD}  Guhatek External API — Connectivity Check{RESET}")
+    print(f"{BOLD}{'─'*60}{RESET}")
+
+    checks = []
+
+    cfg     = _get_config()
+    api_url = cfg.get("api_url", "")
+    api_key = cfg.get("api_key", "")
+
+    if not api_url or not api_key:
+        print(f"  {YELLOW}⚠️ {RESET}  {BOLD}GUHATEK_API_URL or GUHATEK_API_KEY not set in .env{RESET}")
+        print(f"{BOLD}{'─'*60}{RESET}\n")
+        return
+
+    token = None
+
+    async with httpx.AsyncClient(verify=False, timeout=8) as client:
+
+        # ── 1. Auth Token ──────────────────────────────────────────
+        try:
+            r = await client.get(f"{api_url}/api/token", headers={"x-api-key": api_key})
+            if r.status_code == 200 and "token" in r.json():
+                token = r.json()["token"]
+                checks.append((f"{GREEN}✅{RESET}", "Auth Token",     "/api/token",                       "Token fetched OK"))
+            else:
+                checks.append((f"{RED}❌{RESET}", "Auth Token",      "/api/token",                       f"HTTP {r.status_code}"))
+        except Exception as e:
+            checks.append((f"{RED}❌{RESET}", "Auth Token",          "/api/token",                       str(e)[:55]))
+
+        if token:
+            auth = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
+            # ── 2. Candidates (Applications) ───────────────────────
+            try:
+                r = await client.get(f"{api_url}/api/applications", headers=auth)
+                if r.status_code == 200:
+                    data = r.json()
+                    arr  = data if isinstance(data, list) else data.get("data", data.get("applications", []))
+                    checks.append((f"{GREEN}✅{RESET}", "Candidates",     "/api/applications",                f"{len(arr)} records returned"))
+                else:
+                    checks.append((f"{RED}❌{RESET}", "Candidates",      "/api/applications",                f"HTTP {r.status_code}"))
+            except Exception as e:
+                checks.append((f"{RED}❌{RESET}", "Candidates",          "/api/applications",                str(e)[:55]))
+
+            # ── 3. Job Demands (Job Openings) ──────────────────────
+            try:
+                r = await client.get(f"{api_url}/api/applications/jobOpenings", headers=auth)
+                if r.status_code == 200:
+                    data = r.json()
+                    arr  = data if isinstance(data, list) else data.get("data", data.get("jobOpenings", []))
+                    checks.append((f"{GREEN}✅{RESET}", "Job Demands",    "/api/applications/jobOpenings",    f"{len(arr)} records returned"))
+                elif r.status_code == 404:
+                    checks.append((f"{RED}❌{RESET}", "Job Demands",      "/api/applications/jobOpenings",    "404 — Not deployed on this server"))
+                else:
+                    checks.append((f"{RED}❌{RESET}", "Job Demands",      "/api/applications/jobOpenings",    f"HTTP {r.status_code}"))
+            except Exception as e:
+                checks.append((f"{RED}❌{RESET}", "Job Demands",          "/api/applications/jobOpenings",    str(e)[:55]))
+
+            # ── 4. Interview Meetings (Schedule Meet) ──────────────
+            try:
+                r = await client.get(f"{api_url}/api/applications/scheduleMeet", headers=auth)
+                if r.status_code == 200:
+                    data = r.json()
+                    arr  = data if isinstance(data, list) else data.get("data", data.get("meetings", []))
+                    checks.append((f"{GREEN}✅{RESET}", "Interviews",     "/api/applications/scheduleMeet",   f"{len(arr)} records returned"))
+                elif r.status_code == 404:
+                    checks.append((f"{RED}❌{RESET}", "Interviews",       "/api/applications/scheduleMeet",   "404 — Not deployed on this server"))
+                else:
+                    checks.append((f"{RED}❌{RESET}", "Interviews",       "/api/applications/scheduleMeet",   f"HTTP {r.status_code}"))
+            except Exception as e:
+                checks.append((f"{RED}❌{RESET}", "Interviews",           "/api/applications/scheduleMeet",   str(e)[:55]))
+
+    # ── Always show Backend itself ─────────────────────────────────
+    checks.append((f"{GREEN}✅{RESET}", "Backend API", f"http://localhost:{settings.PORT}", "Running"))
+
+    # ── Print table ────────────────────────────────────────────────
+    for icon, name, endpoint, status_msg in checks:
+        print(f"  {icon}  {BOLD}{name:<18}{RESET}  {endpoint:<42}  {status_msg}")
+
+    print(f"{BOLD}{'─'*60}{RESET}\n")
+
+
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Run on startup
+    await _check_external_apis()
+    try:
+        init_db()
+    except Exception as e:
+        logger.error(f"Failed to initialize assessment database: {e}")
+    yield
+    # Run on shutdown (nothing needed)
+
 
 app = FastAPI(
     title="OneGT API",
     description="OneGT API",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan,
 )
 
 # Middleware to log all requests and catch errors
@@ -119,6 +236,14 @@ app.include_router(drive_router.router, prefix="/api/common", tags=["Common"])
 app.include_router(talent_candidates.router, prefix="/api/talent", tags=["Talent - Candidates"])
 app.include_router(talent_demands.router, prefix="/api/talent", tags=["Talent - Demands"])
 app.include_router(talent_interviews.router, prefix="/api/talent", tags=["Talent - Interviews"])
+app.include_router(talent_email.router, prefix="/api/talent", tags=["Talent - Email"])
+
+# Assessment routers
+app.include_router(assessment_router.router, prefix="/api/assessment", tags=["Assessment"])
+app.include_router(assessment_candidate.router, prefix="/api/assessment/candidate", tags=["Assessment - Candidate"])
+app.include_router(assessment_examiner.router, prefix="/api/assessment/examiner", tags=["Assessment - Examiner"])
+app.include_router(assessment_admin.router, prefix="/api/assessment/admin", tags=["Assessment - Admin"])
+app.include_router(assessment_learning.router, prefix="/api/assessment/learning", tags=["Assessment - Learning"])
 
 # CRMS routers
 app.include_router(crms_leads.router, prefix="/api")

@@ -39,6 +39,10 @@ const statusColors = {
   on_hold: 'bg-warning/10 text-warning border-warning/20',
 };
 
+const isValidDate = (d: any) => {
+  return d instanceof Date && !isNaN(d.getTime());
+};
+
 export const DemandDetailsDialog = ({
   demand,
   open,
@@ -148,7 +152,7 @@ export const DemandDetailsDialog = ({
             <div className="space-y-2">
               <Label>Skills (comma separated)</Label>
               <Textarea
-                value={editData?.skills.join(', ') || ''}
+                value={editData?.skills?.join(', ') || ''}
                 onChange={(e) => setEditData(prev => prev ? {
                   ...prev,
                   skills: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
@@ -183,19 +187,19 @@ export const DemandDetailsDialog = ({
             <div className="grid grid-cols-2 gap-4">
               <div className="flex items-center gap-2 text-sm">
                 <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span>{demand.location}</span>
+                <span>{demand.location || 'Not Specified'}</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <Briefcase className="h-4 w-4 text-muted-foreground" />
-                <span>{demand.experience}</span>
+                <span>{demand.experience || 'Not Specified'}</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <Users className="h-4 w-4 text-muted-foreground" />
-                <span>{demand.openings} Openings</span>
+                <span>{demand.openings || 0} Openings</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span>{format(demand.createdAt, 'MMM d, yyyy')}</span>
+                <span>{demand.createdAt ? (isValidDate(new Date(demand.createdAt)) ? format(new Date(demand.createdAt), 'MMM d, yyyy') : 'Invalid Date') : 'No Date'}</span>
               </div>
             </div>
 
@@ -203,9 +207,13 @@ export const DemandDetailsDialog = ({
             <div className="space-y-2">
               <Label className="text-sm text-muted-foreground">Required Skills</Label>
               <div className="flex flex-wrap gap-2">
-                {demand.skills.map((skill) => (
-                  <Badge key={skill} variant="secondary">{skill}</Badge>
-                ))}
+                {(demand.skills || []).length > 0 ? (
+                  demand.skills.map((skill) => (
+                    <Badge key={skill} variant="secondary">{skill}</Badge>
+                  ))
+                ) : (
+                  <span className="text-xs text-muted-foreground italic">No skills listed</span>
+                )}
               </div>
             </div>
 

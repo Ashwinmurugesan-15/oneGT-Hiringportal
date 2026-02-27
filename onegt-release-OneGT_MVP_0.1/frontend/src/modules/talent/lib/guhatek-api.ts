@@ -12,14 +12,10 @@ export interface ExternalApplication {
 
 // Helper to get config lazily
 const getConfig = () => {
-    const useMockApi = false;
-    const apiKey = process.env.GUHATEK_API_KEY;
-    const apiUrl = process.env.GUHATEK_API_URL;
-
-    // Log configuration status (once per request roughly)
-    if (!apiKey) {
-        console.error('❌ GUHATEK_API_KEY is missing in .env');
-    }
+    const useMockApi = false; // ✅ Live API — api-careerpage.guhatek.com
+    const meta = import.meta as any;
+    const apiKey = meta.env?.VITE_GUHATEK_API_KEY || '';
+    const apiUrl = meta.env?.VITE_GUHATEK_API_URL || '';
 
     return { apiUrl, apiKey, useMockApi };
 };
@@ -434,7 +430,7 @@ export const guhatekApi = {
 
         if (useMockApi) {
             console.log('⚠️ Using MOCK API for Job Openings');
-            return []; // Or return mock job openings if necessary
+            return MOCK_JOB_OPENINGS;
         }
 
         if (!apiUrl) {
@@ -596,7 +592,7 @@ export const guhatekApi = {
 
         if (useMockApi) {
             console.log('⚠️ Using MOCK API for Get Scheduled Meetings');
-            return [];
+            return MOCK_MEETINGS;
         }
 
         if (!apiUrl) {
@@ -656,10 +652,132 @@ export const guhatekApi = {
 
 };
 
-const MOCK_APPLICATIONS: ExternalApplication[] = [
-    { id: '1', name: 'Alice Mock', email: 'alice@example.com', phone: '1234567890', role: 'Frontend Dev', status: 'Applied', resume_url: '#', applied_at: new Date().toISOString() },
-    { id: '2', name: 'Bob Mock', email: 'bob@example.com', phone: '0987654321', role: 'Backend Dev', status: 'Interviewing', resume_url: '#', applied_at: new Date().toISOString() },
+const MOCK_APPLICATIONS: any[] = [
+    {
+        id: 'mock-app-1',
+        full_name: 'Arjun Sharma',
+        email: 'arjun.sharma@example.com',
+        contact_number: '9876543210',
+        interested_position: 'mock-demand-1',
+        current_organisation: 'Infosys',
+        current_location: 'Bangalore',
+        total_experience: 4,
+        expected_ctc: 1200000,
+        current_ctc: 900000,
+        notice_period: '30 days',
+        initial_screening: 'PASS',
+        referred_by: 'linkedin',
+        submitted_at: '2026-01-15T10:00:00Z',
+        resume_url: '#',
+    },
+    {
+        id: 'mock-app-2',
+        full_name: 'Priya Nair',
+        email: 'priya.nair@example.com',
+        contact_number: '9123456780',
+        interested_position: 'mock-demand-1',
+        current_organisation: 'TCS',
+        current_location: 'Chennai',
+        total_experience: 3,
+        expected_ctc: 900000,
+        current_ctc: 700000,
+        notice_period: 'Immediate',
+        initial_screening: null,
+        referred_by: 'naukri',
+        submitted_at: '2026-01-20T12:00:00Z',
+        resume_url: '#',
+    },
+    {
+        id: 'mock-app-3',
+        full_name: 'Rahul Verma',
+        email: 'rahul.verma@example.com',
+        contact_number: '9988776655',
+        interested_position: 'mock-demand-2',
+        current_organisation: 'Wipro',
+        current_location: 'Hyderabad',
+        total_experience: 6,
+        expected_ctc: 1800000,
+        current_ctc: 1400000,
+        notice_period: '60 days',
+        initial_screening: 'PASS',
+        round1_feedback: 'Strong problem solver, good communication',
+        offered_position: 'Senior Backend Engineer',
+        referred_by: 'referral',
+        submitted_at: '2026-02-01T09:00:00Z',
+        resume_url: '#',
+    },
+    {
+        id: 'mock-app-4',
+        full_name: 'Sneha Reddy',
+        email: 'sneha.reddy@example.com',
+        contact_number: '9000011112',
+        interested_position: 'mock-demand-2',
+        current_organisation: 'HCL',
+        current_location: 'Pune',
+        total_experience: 2,
+        expected_ctc: 700000,
+        current_ctc: 500000,
+        notice_period: '15 days',
+        initial_screening: 'FAIL',
+        referred_by: 'direct',
+        submitted_at: '2026-02-10T11:00:00Z',
+        resume_url: '#',
+    },
 ];
+
+const MOCK_JOB_OPENINGS: any[] = [
+    {
+        id: 'mock-demand-1',
+        job_title: 'Frontend Developer',
+        role: 'Engineering',
+        experience: '3-5 years',
+        location: 'Bangalore',
+        number_of_openings: 2,
+        required_skills: ['React', 'TypeScript', 'CSS'],
+        status: 'open',
+        created_at: '2026-01-10T00:00:00Z',
+        updated_at: '2026-01-10T00:00:00Z',
+    },
+    {
+        id: 'mock-demand-2',
+        job_title: 'Senior Backend Engineer',
+        role: 'Engineering',
+        experience: '5-8 years',
+        location: 'Hyderabad',
+        number_of_openings: 1,
+        required_skills: ['Node.js', 'Python', 'PostgreSQL'],
+        status: 'open',
+        created_at: '2026-01-15T00:00:00Z',
+        updated_at: '2026-01-15T00:00:00Z',
+    },
+    {
+        id: 'mock-demand-3',
+        job_title: 'UI/UX Designer',
+        role: 'Design',
+        experience: '2-4 years',
+        location: 'Remote',
+        number_of_openings: 1,
+        required_skills: ['Figma', 'Adobe XD', 'User Research'],
+        status: 'open',
+        created_at: '2026-02-01T00:00:00Z',
+        updated_at: '2026-02-01T00:00:00Z',
+    },
+];
+
+const MOCK_MEETINGS: any[] = [
+    {
+        id: 'mock-meet-1',
+        position: 'Frontend Developer',
+        interview_round: 'Technical Round 1',
+        interview_date: '2026-03-05',
+        interview_time: '10:00:00',
+        interviewer_name: 'Karthik R',
+        meet_link: 'https://meet.google.com/abc-defg-hij',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+    },
+];
+
 
 export interface ApplicationInsertData {
     fullName: string;
