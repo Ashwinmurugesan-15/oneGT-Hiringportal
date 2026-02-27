@@ -1,0 +1,8 @@
+{
+  "site_package_search_strategy": "pep503",
+  "search_path": ["."],
+  "source_directories": ["."],
+  "venv": ".venv",
+  "python_version": "3.12",
+  "site_roots": [".venv/lib/python3.12/site-packages"]
+}

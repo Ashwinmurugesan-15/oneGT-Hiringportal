@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Download, Plus, Check } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 
 // Components
@@ -43,9 +43,9 @@ import {
 import { useRecruitment } from '@/context/RecruitmentContext';
 
 const Candidates = () => {
-  const { filteredCandidates: candidates, addCandidate, updateCandidate, updateCandidateStatus, saveScreeningFeedback, updateInterviewStatus, deleteCandidate } = useRecruitment();
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const { filteredCandidates: candidates, addCandidate, applyCandidate, updateCandidate, updateCandidateStatus, saveScreeningFeedback, updateInterviewStatus, deleteCandidate } = useRecruitment();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
 
   // File state for Guhatek API
@@ -151,8 +151,10 @@ const Candidates = () => {
   });
 
   // Helper helpers for filtering
-  const parseExperience = (exp: string): number => {
-    const match = exp.match(/(\d+)/);
+  const parseExperience = (exp: any): number => {
+    if (!exp) return 0;
+    const strExp = String(exp);
+    const match = strExp.match(/(\d+)/);
     return match ? parseInt(match[0]) : 0;
   };
 
@@ -187,9 +189,9 @@ const Candidates = () => {
       if (filters.search) {
         const search = filters.search.toLowerCase();
         const matchesSearch =
-          candidate.name.toLowerCase().includes(search) ||
-          candidate.email.toLowerCase().includes(search) ||
-          (candidate.skills || []).some(s => s.toLowerCase().includes(search));
+          (candidate.name?.toLowerCase() || '').includes(search) ||
+          (candidate.email?.toLowerCase() || '').includes(search) ||
+          (Array.isArray(candidate.skills) ? candidate.skills.some(s => s.toLowerCase().includes(search)) : false);
         if (!matchesSearch) return false;
       }
 
@@ -398,7 +400,10 @@ const Candidates = () => {
         c.phone,
         getDemandTitle(c.demandId),
         c.status,
-        format(new Date(c.appliedAt), 'yyyy-MM-dd'),
+        (() => {
+          const d = new Date(c.appliedAt || '');
+          return !isNaN(d.getTime()) ? format(d, 'yyyy-MM-dd') : 'N/A';
+        })(),
         c.currentRound || 'N/A',
         c.source || 'N/A'
       ])
@@ -479,7 +484,8 @@ const Candidates = () => {
           immediateJoiner: newCandidateData.isImmediateJoiner,
           linkedinProfile: newCandidateData.linkedInProfile,
           otherOffersInHand: newCandidateData.hasOtherOffers,
-          certifications: newCandidateData.certifications,
+          certifications: newCandidateData.certifications ? newCandidateData.certifications.split(',').map(s => s.trim()) : [],
+          skills: newCandidateData.skills ? newCandidateData.skills.split(',').map(s => s.trim()) : [],
           referredBy: newCandidateData.referredBy,
         };
 
@@ -520,39 +526,25 @@ const Candidates = () => {
           immediateJoiner: newCandidateData.isImmediateJoiner,
           linkedinProfile: newCandidateData.linkedInProfile,
           otherOffersInHand: newCandidateData.hasOtherOffers,
-          certifications: newCandidateData.certifications,
+          certifications: newCandidateData.certifications ? newCandidateData.certifications.split(',').map(s => s.trim()) : [],
+          skills: newCandidateData.skills ? newCandidateData.skills.split(',').map(s => s.trim()) : [],
           referredBy: newCandidateData.referredBy,
         };
 
-        // 1. Upload the resume
+        // 1. Submit application with resume via applyCandidate
         const formData = new FormData();
         formData.append('file', selectedFile);
-        const uploadRes = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData
-        });
-        if (!uploadRes.ok) throw new Error('Failed to upload resume');
-        const { url: resumeUrl } = await uploadRes.json();
+        formData.append('applicationData', JSON.stringify(apiData));
 
-        // 2. Add the candidate
-        const result = await addCandidate({
+        const fallbackCandidateData = {
           ...candidateData,
-          id: '', // Will be set by backend
-          resumeUrl
-        } as Candidate);
-
-        // Success! Update local state
-        const newCandidate: Candidate = {
-          ...candidateData as Required<Pick<Candidate, 'name' | 'email' | 'demandId'>>,
-          id: result.id || String(candidates.length + 1),
-          status: 'applied',
-          appliedAt: new Date(),
+          status: 'applied' as const,
           skills: candidateData.skills || [],
           experience: candidateData.experience || '0 years',
-          source: candidateData.source || 'career_portal',
-        } as Candidate;
+          source: (candidateData.source || 'career_portal') as any,
+        } as Omit<Candidate, 'id' | 'appliedAt' | 'resumeUrl'>;
 
-        addCandidate(newCandidate);
+        await applyCandidate(formData, fallbackCandidateData);
         toast.dismiss(toastId);
         toast.success('Application submitted successfully via Guhatek API');
         handleCloseDialog();

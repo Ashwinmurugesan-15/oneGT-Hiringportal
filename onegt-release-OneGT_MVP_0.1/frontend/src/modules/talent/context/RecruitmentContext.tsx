@@ -9,6 +9,8 @@ import { getFilteredCandidatesForUser, getFilteredInterviewsForUser } from '@/ut
 
 interface RecruitmentContextType {
     candidates: Candidate[];
+    demands: any[];
+    setDemands: (demands: any[]) => void;
     filteredCandidates: Candidate[];
     benchResources: BenchResource[];
     interviews: Interview[];
@@ -16,6 +18,7 @@ interface RecruitmentContextType {
     updateCandidateStatus: (candidateId: string, status: Candidate['status']) => void;
     updateCandidateFeedback: (candidateId: string, round: InterviewRound, feedback: any) => void;
     addCandidate: (candidate: Candidate) => Promise<Candidate>;
+    applyCandidate: (formData: FormData, fallbackCandidate: Omit<Candidate, 'id' | 'appliedAt' | 'resumeUrl'>) => Promise<Candidate>;
     addBenchResource: (resource: BenchResource) => void;
     updateBenchResource: (resource: BenchResource) => void;
     addInterview: (interview: Omit<Interview, 'id'>) => void;
@@ -36,6 +39,7 @@ const RecruitmentContext = createContext<RecruitmentContextType | undefined>(und
 
 export const RecruitmentProvider = ({ children }: { children: ReactNode }) => {
     const [candidates, setCandidates] = useState<Candidate[]>([]);
+    const [demands, setDemands] = useState<any[]>([]);
     const [benchResources, setBenchResources] = useState<BenchResource[]>(mockBenchResources);
     const [interviews, setInterviews] = useState<Interview[]>([]);
     const { user, isAuthenticated, getAuthHeader } = useAuth();
@@ -58,35 +62,39 @@ export const RecruitmentProvider = ({ children }: { children: ReactNode }) => {
             try {
                 // Fetch external applicants alongside internal data
                 const headers = getAuthHeader();
-                const [candRes, intRes] = await Promise.all([
+                const [candRes, intRes, demRes] = await Promise.all([
                     fetch('/api/talent/candidates', { headers }),
-                    fetch('/api/talent/interviews', { headers })
+                    fetch('/api/talent/interviews', { headers }),
+                    fetch('/api/talent/demands', { headers })
                 ]);
 
-                console.log(`[RecruitmentContext] Responses: Candidates=${candRes.status}, Interviews=${intRes.status}`);
+                console.log(`[RecruitmentContext] Responses: Candidates=${candRes.status}, Interviews=${intRes.status}, Demands=${demRes.status}`);
 
-                if (!candRes.ok || !intRes.ok) {
+                if (!candRes.ok || !intRes.ok || !demRes.ok) {
                     console.error('[RecruitmentContext] Critical API failure');
-                    throw new Error(`API error: ${candRes.status} / ${intRes.status}`);
+                    throw new Error(`API error: ${candRes.status} / ${intRes.status} / ${demRes.status}`);
                 }
 
                 const cands = await candRes.json();
                 const ints = await intRes.json();
+                const dems = await demRes.json();
 
                 console.log('Fetched candidates:', cands.length);
                 console.log('Fetched interviews:', ints.length);
+                console.log('Fetched demands:', dems.length);
 
                 const allCandidates = cands.map((c: any) => ({
                     ...c,
-                    appliedAt: new Date(c.appliedAt),
+                    appliedAt: c.appliedAt ? new Date(c.appliedAt) : new Date(),
                     dateOfJoining: c.dateOfJoining ? new Date(c.dateOfJoining) : undefined
                 }));
 
                 setCandidates(allCandidates);
                 setInterviews(ints.map((i: any) => ({
                     ...i,
-                    scheduledAt: new Date(i.scheduledAt)
+                    scheduledAt: i.scheduledAt ? new Date(i.scheduledAt) : new Date()
                 })));
+                setDemands(dems);
             } catch (error) {
                 console.error('Failed to fetch data:', error);
                 toast.error('Failed to load recruitment data');
@@ -361,7 +369,10 @@ GuhaTek Recruitment Team`
         try {
             const res = await fetch('/api/talent/candidates', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeader()
+                },
                 body: JSON.stringify(candidate),
             });
             const newCand = await res.json();
@@ -370,6 +381,34 @@ GuhaTek Recruitment Team`
             return formattedCand;
         } catch (error) {
             toast.error('Failed to add candidate');
+            throw error;
+        }
+    };
+
+    const applyCandidate = async (formData: FormData, fallbackCandidate: Omit<Candidate, 'id' | 'appliedAt' | 'resumeUrl'>) => {
+        try {
+            const res = await fetch('/api/talent/candidates/apply', {
+                method: 'POST',
+                headers: getAuthHeader(),
+                body: formData
+            });
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.detail || err.message || 'Failed to submit application');
+            }
+
+            const result = await res.json();
+            const newCand: Candidate = {
+                ...fallbackCandidate,
+                id: result.id || String(candidates.length + 1),
+                appliedAt: new Date(),
+                resumeUrl: ''
+            } as Candidate;
+            setCandidates((prev) => [newCand, ...prev]);
+            return newCand;
+        } catch (error) {
+            toast.error('Failed to apply candidate');
             throw error;
         }
     };
@@ -417,7 +456,10 @@ GuhaTek Recruitment Team`
 
             const res = await fetch('/api/talent/candidates/update', {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeader()
+                },
                 body: JSON.stringify(updates),
             });
 
@@ -436,7 +478,10 @@ GuhaTek Recruitment Team`
         try {
             const res = await fetch('/api/talent/candidates/update', {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeader()
+                },
                 body: JSON.stringify({ id: candidateId, status }),
             });
             const updatedCand = await res.json();
@@ -476,7 +521,10 @@ GuhaTek Recruitment Team`
         try {
             const res = await fetch('/api/talent/candidates/update', {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeader()
+                },
                 body: JSON.stringify({ id: candidateId, ...updates }),
             });
 
@@ -496,7 +544,10 @@ GuhaTek Recruitment Team`
         try {
             const res = await fetch('/api/talent/interviews', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeader()
+                },
                 body: JSON.stringify(interview),
             });
 
@@ -523,7 +574,10 @@ GuhaTek Recruitment Team`
 
                 const candidateUpdateRes = await fetch('/api/talent/candidates/update', {
                     method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeader()
+                    },
                     body: JSON.stringify({
                         id: interview.candidateId,
                         status: isRejected ? 'rejected' : (interview.status === 'completed' ? 'interview_completed' : 'interview_scheduled'),
@@ -553,7 +607,10 @@ GuhaTek Recruitment Team`
         try {
             const res = await fetch('/api/talent/interviews', {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeader()
+                },
                 body: JSON.stringify({ id: interviewId, ...updates }),
             });
 
@@ -567,7 +624,10 @@ GuhaTek Recruitment Team`
                 if (updates.status === 'completed' || updates.status === 'cancelled') {
                     const candidateUpdateRes = await fetch('/api/talent/candidates/update', {
                         method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...getAuthHeader()
+                        },
                         body: JSON.stringify({
                             id: updatedInt.candidateId,
                             currentRound: updates.status === 'completed' ? updatedInt.round + 1 : updatedInt.round, // Move to next round if completed
@@ -601,7 +661,10 @@ GuhaTek Recruitment Team`
             const isRejected = feedback.toLowerCase().includes('reject');
             const res = await fetch('/api/talent/candidates/update', {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeader()
+                },
                 body: JSON.stringify({
                     id: candidateId,
                     screeningFeedback: feedback,
@@ -641,7 +704,10 @@ GuhaTek Recruitment Team`
 
             const res = await fetch('/api/talent/candidates/update', {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeader()
+                },
                 body: JSON.stringify({
                     id: candidateId,
                     onboardingTasks: updatedTasks,
@@ -665,14 +731,32 @@ GuhaTek Recruitment Team`
         try {
             const res = await fetch('/api/talent/candidates/update', {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeader()
+                },
                 body: JSON.stringify({ id: candidateId, ...updates }),
             });
 
             if (res.ok) {
                 const updatedCand = await res.json();
+                // Map Guhatek API field names back to Candidate type fields
+                const mapped: Partial<Candidate> = {
+                    ...updatedCand,
+                    name: updatedCand.fullName || updatedCand.name,
+                    phone: updatedCand.contactNumber || updatedCand.phone,
+                    currentCompany: updatedCand.currentOrganization || updatedCand.currentCompany,
+                    experience: updatedCand.totalExperience != null ? String(updatedCand.totalExperience) + ' years' : updatedCand.experience,
+                    location: updatedCand.currentLocation || updatedCand.location,
+                    currentCTC: updatedCand.currentCTC != null ? String(updatedCand.currentCTC) : undefined,
+                    expectedCTC: updatedCand.expectedCTC != null ? String(updatedCand.expectedCTC) : undefined,
+                    linkedInProfile: updatedCand.linkedinProfile || updatedCand.linkedInProfile,
+                    isServingNotice: updatedCand.currentlyInNotice ?? updatedCand.isServingNotice,
+                    isImmediateJoiner: updatedCand.immediateJoiner ?? updatedCand.isImmediateJoiner,
+                    hasOtherOffers: updatedCand.otherOffersInHand ?? updatedCand.hasOtherOffers,
+                };
                 setCandidates((prev) =>
-                    prev.map((c) => (c.id === candidateId ? { ...c, ...updatedCand, appliedAt: new Date(updatedCand.appliedAt || c.appliedAt) } : c))
+                    prev.map((c) => (c.id === candidateId ? { ...c, ...mapped, appliedAt: new Date(updatedCand.appliedAt || c.appliedAt) } : c))
                 );
                 toast.success('Candidate updated successfully');
             } else {
@@ -693,7 +777,10 @@ GuhaTek Recruitment Team`
         try {
             const res = await fetch('/api/talent/email/send', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeader()
+                },
                 body: JSON.stringify({ to, subject, html }),
             });
             const data = await res.json();
@@ -727,6 +814,8 @@ GuhaTek Recruitment Team`
     return (
         <RecruitmentContext.Provider value={{
             candidates,
+            demands,
+            setDemands,
             filteredCandidates,
             benchResources,
             interviews,
@@ -734,6 +823,7 @@ GuhaTek Recruitment Team`
             updateCandidateStatus,
             updateCandidateFeedback,
             addCandidate,
+            applyCandidate,
             addBenchResource,
             updateBenchResource,
             addInterview,

@@ -31,16 +31,9 @@ class GoogleSheetsService:
         return cls._instance
     
     def _initialize_pool(self, pool_size: int = 5):
-        """Initialize a pool of authorized gspread clients."""
+        """Initialize a pool of authorized gspread clients (lazy — no pre-warming)."""
         self._pool = queue.Queue(maxsize=pool_size)
-        
-        # Pre-warm the pool
-        for _ in range(pool_size):
-            client = self._create_client()
-            if client:
-                self._pool.put(client)
-        
-        logger.info(f"Initialized Google Sheets client pool with size {pool_size}")
+        logger.info(f"Initialized Google Sheets client pool (lazy) with max size {pool_size}")
 
     def _create_client(self):
         """Create a single authorized gspread client."""

@@ -129,7 +129,10 @@ export const CandidateProfileDialog = ({
             )}
             <div className="flex items-center gap-3 text-sm">
               <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span>Applied: {format(candidate.appliedAt, 'MMM d, yyyy')}</span>
+              <span>Applied: {(() => {
+                const d = new Date(candidate.appliedAt);
+                return !isNaN(d.getTime()) ? format(d, 'MMM d, yyyy') : 'N/A';
+              })()}</span>
             </div>
             {candidate.currentRound && (
               <div className="flex items-center gap-3 text-sm">
@@ -162,7 +165,10 @@ export const CandidateProfileDialog = ({
           {candidate.dateOfJoining && (
             <div className="p-4 rounded-lg border bg-accent/5">
               <div className="text-sm text-muted-foreground mb-1">Date of Joining</div>
-              <p className="font-semibold text-accent">{format(candidate.dateOfJoining, 'MMMM d, yyyy')}</p>
+              <p className="font-semibold text-accent">{(() => {
+                const d = new Date(candidate.dateOfJoining);
+                return !isNaN(d.getTime()) ? format(d, 'MMMM d, yyyy') : 'TBD';
+              })()}</p>
             </div>
           )}
         </div>

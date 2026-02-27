@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { DemandCard } from '@/components/dashboard/DemandCard';
@@ -35,7 +35,7 @@ import { AnimateIcon } from '@/components/ui/AnimateIcon';
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const router = useRouter();
+  const navigate = useNavigate();
 
   const { filteredCandidates: candidates, filteredInterviews: interviews } = useRecruitment();
   const { demands, updateDemand, closeDemand, deleteDemand } = useDemands();
@@ -206,7 +206,7 @@ const Dashboard = () => {
                             </a>
                           </Button>
                         )}
-                        <Button variant="outline" size="sm" onClick={() => router.push('/interviews')}>
+                        <Button variant="outline" size="sm" onClick={() => navigate('/talent/interviews')}>
                           Submit Feedback
                         </Button>
                       </div>
@@ -267,7 +267,7 @@ const Dashboard = () => {
                 Open Demands
                 <span className="ml-2 text-sm font-normal text-muted-foreground">({activeDemands.length})</span>
               </h3>
-              <Button variant="ghost" size="sm" className="text-primary" onClick={() => router.push('/demands')}>
+              <Button variant="ghost" size="sm" className="text-primary" onClick={() => navigate('/talent/demands')}>
                 View All
               </Button>
             </div>
@@ -280,10 +280,10 @@ const Dashboard = () => {
                   onEdit={() => handleEditDemand(demand)}
                   onClose={() => handleCloseDemand(demand)}
                   onDelete={() => handleDeleteDemand(demand)}
-                  onViewApplied={() => router.push(`/candidates?demandId=${demand.id}&status=applied`)}
-                  onViewInterviewed={() => router.push(`/candidates?demandId=${demand.id}&status=interview_scheduled,interview_completed`)}
-                  onViewRejected={() => router.push(`/candidates?demandId=${demand.id}&status=rejected`)}
-                  onViewOffers={() => router.push(`/candidates?demandId=${demand.id}&status=offer_rolled,offer_accepted`)}
+                  onViewApplied={() => navigate(`/talent/candidates?demandId=${demand.id}&status=applied`)}
+                  onViewInterviewed={() => navigate(`/talent/candidates?demandId=${demand.id}&status=interview_scheduled,interview_completed`)}
+                  onViewRejected={() => navigate(`/talent/candidates?demandId=${demand.id}&status=rejected`)}
+                  onViewOffers={() => navigate(`/talent/candidates?demandId=${demand.id}&status=offer_rolled,offer_accepted`)}
                 />
               ))}
             </div>

@@ -23,8 +23,7 @@ class GoogleDriveService:
         return cls._instance
     
     def __init__(self):
-        if self._service is None:
-            self._initialize_service()
+        pass  # Lazy init — service is created on first use via _ensure_service()
     
     def _initialize_service(self):
         """Initialize Google Drive service with service account or ADC."""
