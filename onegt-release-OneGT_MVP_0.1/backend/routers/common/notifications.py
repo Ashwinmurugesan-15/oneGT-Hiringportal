@@ -11,7 +11,7 @@ from datetime import datetime
 router = APIRouter()
 
 @router.get("/", response_model=List[Notification])
-async def get_notifications(user_id: str):
+def get_notifications(user_id: str):
     """Get notifications for a specific user."""
     try:
         sheets_service.create_sheet_if_not_exists(
@@ -80,7 +80,7 @@ async def get_notifications(user_id: str):
         return []
 
 @router.post("/", response_model=dict)
-async def create_notification(notification: NotificationCreate):
+def create_notification(notification: NotificationCreate):
     """Create a new notification."""
     try:
         sheet_name = settings.NOTIFICATIONS_SHEET if hasattr(settings, 'NOTIFICATIONS_SHEET') else "Notifications"
@@ -96,7 +96,7 @@ async def create_notification(notification: NotificationCreate):
         return {"success": False, "error": str(e)}
 
 @router.put("/{row_index}/read", response_model=dict)
-async def mark_as_read(row_index: int):
+def mark_as_read(row_index: int):
     """Mark a notification as read."""
     try:
         sheet_name = settings.NOTIFICATIONS_SHEET if hasattr(settings, 'NOTIFICATIONS_SHEET') else "Notifications"
@@ -107,7 +107,7 @@ async def mark_as_read(row_index: int):
         return {"success": False, "error": str(e)}
 
 @router.post("/mark-all-read", response_model=dict)
-async def mark_all_read(user_id: str):
+def mark_all_read(user_id: str):
     """Mark all notifications as read for a user."""
     try:
         sheet_name = settings.NOTIFICATIONS_SHEET if hasattr(settings, 'NOTIFICATIONS_SHEET') else "Notifications"

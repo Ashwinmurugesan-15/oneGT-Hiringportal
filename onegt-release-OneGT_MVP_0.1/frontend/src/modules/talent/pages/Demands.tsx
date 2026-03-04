@@ -213,7 +213,7 @@ const Demands = () => {
               key={demand.id}
               demand={demand}
               onViewDetails={() => handleViewDetails(demand)}
-              onEdit={demand.status !== 'deleted' ? () => handleEditDemand(demand) : undefined}
+              onEdit={demand.status !== 'deleted' && demand.status !== 'closed' ? () => handleEditDemand(demand) : undefined}
               onClose={demand.status !== 'deleted' ? () => handleCloseDemand(demand) : undefined}
               onDelete={demand.status !== 'deleted' ? () => handleDeleteDemand(demand) : undefined}
               showActions={demand.status !== 'deleted'}

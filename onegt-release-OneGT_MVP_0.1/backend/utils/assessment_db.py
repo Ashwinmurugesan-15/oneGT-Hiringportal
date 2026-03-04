@@ -10,15 +10,11 @@ from datetime import datetime, timezone
 from typing import Any, List, Optional, Dict
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 
-import psycopg2
-import psycopg2.extras
-from psycopg2 import pool as pg_pool
+import pg8000
+import pg8000.dbapi
 from config import settings
 
 logger = logging.getLogger("chrms.assessment.db")
-
-# Connection pool
-_pool: pg_pool.ThreadedConnectionPool = None
 
 def _get_clean_url_and_schema(url: str):
     schema_name = None
@@ -31,21 +27,68 @@ def _get_clean_url_and_schema(url: str):
         clean_url = urlunparse(parsed._replace(query=new_query))
     return clean_url, schema_name
 
-def get_pool() -> pg_pool.ThreadedConnectionPool:
-    global _pool
-    if _pool is None or _pool.closed:
-        url, schema = _get_clean_url_and_schema(settings.ASSESSMENT_DATABASE_URL)
-        kwargs = {}
-        if schema:
-            kwargs["options"] = f"-c search_path={schema},public"
-        _pool = pg_pool.ThreadedConnectionPool(2, 20, url, **kwargs)
-    return _pool
+# In Cloudflare Workers, we don't use a long-lived pool. 
+# We open a connection per request or use a simple singleton for local dev.
+_conn = None
 
 def get_conn():
-    return get_pool().getconn()
+    global _conn
+    url, schema = _get_clean_url_and_schema(settings.ASSESSMENT_DATABASE_URL)
+    parsed = urlparse(url)
+    
+    # Extract connection parameters from URL
+    # format: postgresql://[user[:password]@][host][:port]/database
+    user = parsed.username
+    password = parsed.password
+    host = parsed.hostname
+    port = parsed.port or 5432
+    database = parsed.path.lstrip('/')
+
+    conn = pg8000.dbapi.connect(
+        user=user,
+        password=password,
+        host=host,
+        port=port,
+        database=database,
+        ssl_context=True # Workers usually require SSL for external DBs
+    )
+    
+    if schema:
+        with conn.cursor() as cur:
+            cur.execute(f"SET search_path TO {schema},public")
+    
+    return conn
 
 def put_conn(conn):
-    get_pool().putconn(conn)
+    try:
+        conn.close()
+    except:
+        pass
+
+class DictCursor:
+    """Helper to simulate RealDictCursor behavior with pg8000."""
+    def __init__(self, cursor):
+        self.cursor = cursor
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.cursor.close()
+
+    def execute(self, query, params=None):
+        return self.cursor.execute(query, params)
+
+    def fetchone(self):
+        row = self.cursor.fetchone()
+        if not row: return None
+        columns = [col[0] for col in self.cursor.description]
+        return dict(zip(columns, row))
+
+    def fetchall(self):
+        rows = self.cursor.fetchall()
+        columns = [col[0] for col in self.cursor.description]
+        return [dict(zip(columns, row)) for row in rows]
 
 def init_db():
     """Run assessment_schema.sql to create tables if they don't exist."""
@@ -68,13 +111,22 @@ def init_db():
     finally:
         put_conn(conn)
 
-psycopg2.extras.register_uuid()
+# uuid registration not needed for pg8000 as it handles it or we use strings
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 def _gen_id() -> str:
     return str(uuid.uuid4())
+
+def _serialise(obj: Any) -> Any:
+    from datetime import datetime
+    import uuid
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    if isinstance(obj, uuid.UUID):
+        return str(obj)
+    return obj
 
 def _parse_json(val: Any) -> Any:
     if isinstance(val, str):
@@ -88,7 +140,7 @@ def _parse_json(val: Any) -> Any:
 def create_user(user: dict) -> dict:
     conn = get_conn()
     try:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        with DictCursor(conn.cursor()) as cur:
             cur.execute(
                 """INSERT INTO users 
                    (id, name, email, password, role, created_at, is_first_login, assigned_assessments, created_assessments)
@@ -103,45 +155,45 @@ def create_user(user: dict) -> dict:
             )
             row = cur.fetchone()
         conn.commit()
-        return dict(row)
+        return row
     finally:
         put_conn(conn)
 
 def get_user_by_email(email: str) -> Optional[dict]:
     conn = get_conn()
     try:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        with DictCursor(conn.cursor()) as cur:
             cur.execute("SELECT * FROM users WHERE email = %s", (email,))
             row = cur.fetchone()
-        return dict(row) if row else None
+        return row
     finally:
         put_conn(conn)
 
 def get_user_by_id(uid: str) -> Optional[dict]:
     conn = get_conn()
     try:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        with DictCursor(conn.cursor()) as cur:
             cur.execute("SELECT * FROM users WHERE id = %s", (uid,))
             row = cur.fetchone()
-        return dict(row) if row else None
+        return row
     finally:
         put_conn(conn)
 
 def get_all_users() -> List[dict]:
     conn = get_conn()
     try:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        with DictCursor(conn.cursor()) as cur:
             cur.execute("SELECT * FROM users")
-            return [dict(r) for r in cur.fetchall()]
+            return cur.fetchall()
     finally:
         put_conn(conn)
 
 def get_users_by_role(role: str) -> List[dict]:
     conn = get_conn()
     try:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        with DictCursor(conn.cursor()) as cur:
             cur.execute("SELECT * FROM users WHERE role = %s", (role,))
-            return [dict(r) for r in cur.fetchall()]
+            return cur.fetchall()
     finally:
         put_conn(conn)
 
@@ -152,11 +204,11 @@ def update_user(uid: str, updates: dict) -> Optional[dict]:
     set_clause = ", ".join(f"{f} = %s" for f in fields)
     conn = get_conn()
     try:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        with DictCursor(conn.cursor()) as cur:
             cur.execute(f"UPDATE users SET {set_clause} WHERE id = %s RETURNING *", (*values, uid))
             row = cur.fetchone()
         conn.commit()
-        return dict(row) if row else None
+        return row
     finally:
         put_conn(conn)
 
@@ -223,40 +275,39 @@ def save_assessment(a: dict) -> None:
 def get_assessment(aid: str) -> Optional[dict]:
     conn = get_conn()
     try:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        with DictCursor(conn.cursor()) as cur:
             cur.execute("SELECT * FROM assessments WHERE assessment_id = %s", (aid,))
             row = cur.fetchone()
         if not row: return None
-        d = dict(row)
-        d["questions"] = _parse_json(d["questions"])
-        return d
+        row["questions"] = _parse_json(row["questions"])
+        return row
     finally:
         put_conn(conn)
 
 def get_all_assessments() -> List[dict]:
     conn = get_conn()
     try:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        with DictCursor(conn.cursor()) as cur:
             cur.execute("SELECT * FROM assessments ORDER BY created_at DESC")
             rows = cur.fetchall()
-        return [{**dict(r), "questions": _parse_json(r["questions"])} for r in rows]
+        return [{**r, "questions": _parse_json(r["questions"])} for r in rows]
     finally:
         put_conn(conn)
 
 def get_assessments_by_candidate(candidate_id: str) -> List[dict]:
     conn = get_conn()
     try:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        with DictCursor(conn.cursor()) as cur:
             cur.execute("SELECT * FROM assessments WHERE %s = ANY(assigned_to) ORDER BY created_at DESC", (candidate_id,))
             rows = cur.fetchall()
-        return [{**dict(r), "questions": _parse_json(r["questions"])} for r in rows]
+        return [{**r, "questions": _parse_json(r["questions"])} for r in rows]
     finally:
         put_conn(conn)
 
 def get_assessments_by_examiner(examiner_id: str) -> List[dict]:
     conn = get_conn()
     try:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        with DictCursor(conn.cursor()) as cur:
             cur.execute("SELECT id FROM users WHERE role = %s", ("admin",))
             admin_ids = [r["id"] for r in cur.fetchall()]
             ids = [examiner_id] + admin_ids
@@ -280,14 +331,13 @@ def update_assessment(aid: str, updates: dict) -> Optional[dict]:
     set_clause = ", ".join(parts)
     conn = get_conn()
     try:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        with DictCursor(conn.cursor()) as cur:
             cur.execute(f"UPDATE assessments SET {set_clause} WHERE assessment_id = %s RETURNING *", (*values, aid))
             row = cur.fetchone()
         conn.commit()
         if not row: return None
-        d = dict(row)
-        d["questions"] = _parse_json(d["questions"])
-        return d
+        row["questions"] = _parse_json(row["questions"])
+        return row
     finally:
         put_conn(conn)
 
@@ -319,27 +369,27 @@ def save_result(result: dict) -> None:
 def get_results(assessment_id: str) -> List[dict]:
     conn = get_conn()
     try:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        with DictCursor(conn.cursor()) as cur:
             cur.execute("SELECT * FROM results WHERE assessment_id = %s ORDER BY timestamp DESC", (assessment_id,))
             rows = cur.fetchall()
-        return [{**dict(r), "result": _parse_json(r["result"])} for r in rows]
+        return [{**r, "result": _parse_json(r["result"])} for r in rows]
     finally:
         put_conn(conn)
 
 def get_results_by_user(user_id: str) -> List[dict]:
     conn = get_conn()
     try:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        with DictCursor(conn.cursor()) as cur:
             cur.execute("SELECT * FROM results WHERE user_id = %s ORDER BY timestamp DESC", (user_id,))
             rows = cur.fetchall()
-        return [{**dict(r), "result": _parse_json(r["result"])} for r in rows]
+        return [{**r, "result": _parse_json(r["result"])} for r in rows]
     finally:
         put_conn(conn)
 
 def get_all_results() -> List[dict]:
     conn = get_conn()
     try:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        with DictCursor(conn.cursor()) as cur:
             cur.execute("SELECT * FROM results ORDER BY timestamp DESC")
             rows = cur.fetchall()
         return [{**dict(r), "result": _parse_json(r["result"])} for r in rows]
@@ -377,7 +427,7 @@ def create_learning_resource(resource: dict) -> dict:
     now = _now_iso()
     conn = get_conn()
     try:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        with DictCursor(conn.cursor()) as cur:
             cur.execute(
                 """INSERT INTO learning_resources (id, title, description, course_url, url_type, image_url, created_by, created_at, updated_at)
                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING *""",
@@ -385,16 +435,16 @@ def create_learning_resource(resource: dict) -> dict:
             )
             row = cur.fetchone()
         conn.commit()
-        return dict(row)
+        return row
     finally:
         put_conn(conn)
 
 def get_all_learning_resources() -> List[dict]:
     conn = get_conn()
     try:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        with DictCursor(conn.cursor()) as cur:
             cur.execute("SELECT * FROM learning_resources ORDER BY created_at DESC")
-            return [dict(r) for r in cur.fetchall()]
+            return cur.fetchall()
     finally:
         put_conn(conn)
 
@@ -406,11 +456,11 @@ def update_learning_resource(rid: str, updates: dict) -> Optional[dict]:
     set_clause = ", ".join(f"{f} = %s" for f in fields)
     conn = get_conn()
     try:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        with DictCursor(conn.cursor()) as cur:
             cur.execute(f"UPDATE learning_resources SET {set_clause} WHERE id = %s RETURNING *", (*values, rid))
             row = cur.fetchone()
         conn.commit()
-        return dict(row) if row else None
+        return row
     finally:
         put_conn(conn)
 
@@ -427,10 +477,10 @@ def delete_learning_resource(rid: str) -> bool:
 def get_learning_resource(rid: str) -> Optional[dict]:
     conn = get_conn()
     try:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        with DictCursor(conn.cursor()) as cur:
             cur.execute("SELECT * FROM learning_resources WHERE id = %s", (rid,))
             row = cur.fetchone()
-        return dict(row) if row else None
+        return row
     finally:
         put_conn(conn)
 
@@ -454,16 +504,16 @@ def save_learning_progress(user_id: str, resource_id: str) -> None:
 def get_user_learning_progress(user_id: str) -> List[dict]:
     conn = get_conn()
     try:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        with DictCursor(conn.cursor()) as cur:
             cur.execute("SELECT resource_id, viewed_at, updated_at FROM learning_progress WHERE user_id = %s", (user_id,))
-            return [dict(r) for r in cur.fetchall()]
+            return cur.fetchall()
     finally:
         put_conn(conn)
 
 def get_resource_view_analytics(resource_id: str) -> List[dict]:
     conn = get_conn()
     try:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        with DictCursor(conn.cursor()) as cur:
             cur.execute(
                 """SELECT lp.user_id, u.name as user_name, u.email as user_email, lp.viewed_at 
                    FROM learning_progress lp
@@ -472,6 +522,6 @@ def get_resource_view_analytics(resource_id: str) -> List[dict]:
                    ORDER BY lp.viewed_at DESC""",
                 (resource_id,)
             )
-            return [dict(r) for r in cur.fetchall()]
+            return cur.fetchall()
     finally:
         put_conn(conn)

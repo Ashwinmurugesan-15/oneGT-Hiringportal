@@ -101,7 +101,14 @@ export default function AdminDashboard() {
                     <h1 className="text-3xl font-bold text-gray-900">Assessment Administration</h1>
                     <p className="text-gray-500 mt-1.5">Welcome back, <span className="text-blue-600 font-semibold">{user?.name}</span>. Overseeing all portal activity.</p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-3">
+                    <button
+                        onClick={() => navigate('/assessment/learning', { state: { openAddResource: true } })}
+                        className="flex items-center justify-center gap-2 px-6 py-3 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition-all"
+                    >
+                        <BookOpen size={20} />
+                        Add Resource
+                    </button>
                     <button
                         onClick={() => navigate('/assessment/admin/users')}
                         className="flex items-center justify-center gap-2 px-6 py-3 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition-all"

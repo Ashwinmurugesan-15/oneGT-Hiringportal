@@ -1,0 +1,12 @@
+.venv
+__pycache__
+*.pyc
+.env
+.env.local
+.git
+node_modules
+*.log
+.wrangler
+wrangler.toml
+cf-requirements.txt
+# etc

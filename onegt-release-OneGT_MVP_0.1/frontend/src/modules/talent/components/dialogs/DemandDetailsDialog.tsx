@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Demand } from '@/types/recruitment';
+import { useRecruitment } from '@/context/RecruitmentContext';
 import {
   Dialog,
   DialogContent,
@@ -62,7 +63,15 @@ export const DemandDetailsDialog = ({
     }
   }, [open, demand, mode]);
 
+  const { candidates } = useRecruitment();
+
   if (!demand) return null;
+
+  // Calculate live rejected count based on linked candidates
+  const liveRejectedCount = candidates.filter(
+    c => c.demandId === demand.id && c.status === 'rejected'
+  ).length;
+  const rejectedCount = liveRejectedCount > 0 ? liveRejectedCount : (demand.rejected || 0);
 
   const handleSave = () => {
     if (!editData) return;
@@ -82,10 +91,10 @@ export const DemandDetailsDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pr-8">
             <DialogTitle>{isEditing ? 'Edit Demand' : 'Demand Details'}</DialogTitle>
             {!isEditing && mode !== 'edit' && (
-              <Button variant="ghost" size="sm" onClick={() => {
+              <Button variant="ghost" size="sm" className="-mr-2" onClick={() => {
                 setEditData(demand);
                 setIsEditing(true);
               }}>
@@ -218,16 +227,20 @@ export const DemandDetailsDialog = ({
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-4 p-4 rounded-lg bg-muted/50">
+            <div className="grid grid-cols-4 gap-4 p-4 rounded-lg bg-muted/50">
               <div className="text-center">
                 <p className="text-2xl font-bold text-foreground">{demand.applicants}</p>
                 <p className="text-sm text-muted-foreground">Applied</p>
               </div>
-              <div className="text-center border-x">
+              <div className="text-center border-l">
                 <p className="text-2xl font-bold text-foreground">{demand.interviewed}</p>
                 <p className="text-sm text-muted-foreground">Interviewed</p>
               </div>
-              <div className="text-center">
+              <div className="text-center border-l border-border">
+                <p className="text-2xl font-bold text-destructive">{rejectedCount}</p>
+                <p className="text-sm text-muted-foreground">Rejected</p>
+              </div>
+              <div className="text-center border-l">
                 <p className="text-2xl font-bold text-accent">{demand.offers}</p>
                 <p className="text-sm text-muted-foreground">Offers</p>
               </div>

@@ -63,26 +63,25 @@
       "experience": "5-7",
       "location": "Coimbatore",
       "openings": 10,
-      "skills": [
-        "AWS",
-        "Docker",
-        "jenkins",
-        "S3bucket",
-        "linux",
-        "grafana"
-      ],
+      "skills": ["AWS", "Docker", "jenkins", "S3bucket", "linux", "grafana"],
       "status": "open",
       "createdBy": "Current User",
       "rejected": 0,
       "createdAt": "2026-02-26T05:22:20.000Z",
       "applicants": 0,
       "interviewed": 0,
-      "offers": 0
-    },
-    {
-      "id": "1772113707655",
-      "title": "Test",
-      "createdAt": "2026-02-26T13:48:27.000Z"
+      "offers": 0,
+      "department": "Automation-DevOps",
+      "roleCategory": "Platform Engineering",
+      "level": "Senior",
+      "employmentType": "Full-time",
+      "workMode": "Hybrid",
+      "salary": "15-20 LPA",
+      "description": "We are looking for a Senior DevOps Engineer to lead our infrastructure automation efforts.",
+      "responsibilities": ["Manage AWS infrastructure", "Optimize CI/CD pipelines", "Mentor junior engineers"],
+      "requirements": ["5+ years experience", "Strong AWS & Docker skills"],
+      "isActive": true,
+      "postedDate": "2026-02-26"
     },
     {
       "id": "1772119163757",
@@ -91,39 +90,25 @@
       "experience": "4-7",
       "location": "chennai",
       "openings": 10,
-      "skills": [
-        "Aws",
-        "s3",
-        "docker"
-      ],
+      "skills": ["Aws", "s3", "docker"],
       "status": "open",
       "createdBy": "Current User",
       "rejected": 0,
       "createdAt": "2026-02-26T15:23:23.000Z",
       "applicants": 0,
       "interviewed": 0,
-      "offers": 0
-    },
-    {
-      "id": "1772184293580",
-      "title": "test ",
-      "role": "Devops ",
-      "experience": "3-4",
-      "location": "chennai",
-      "openings": 12,
-      "skills": [
-        "AWS",
-        "Docker",
-        "grafana",
-        "python"
-      ],
-      "status": "open",
-      "createdBy": "Current User",
-      "rejected": 0,
-      "createdAt": "2026-02-27T09:25:02.000Z",
-      "applicants": 0,
-      "interviewed": 0,
-      "offers": 0
+      "offers": 0,
+      "department": "Automation-DevOps",
+      "roleCategory": "DevOps Engineering",
+      "level": "Mid",
+      "employmentType": "Full-time",
+      "workMode": "Onsite",
+      "salary": "10-15 LPA",
+      "description": "Join our DevOps team in Chennai.",
+      "responsibilities": ["Cloud maintenance", "Automation"],
+      "requirements": ["Docker", "S3"],
+      "isActive": true,
+      "postedDate": "2026-02-26"
     }
   ],
   "candidates": [
@@ -355,12 +340,19 @@
       ],
       "referredBy": "",
       "name": "Test API Use",
-      "status": "applied",
-      "appliedAt": "2026-02-26T12:44:37.000Z"
+      "status": "interview_scheduled",
+      "appliedAt": "2026-02-26T12:44:37.000Z",
+      "interviewStatus": "hr_inter_sched",
+      "currentRound": 2,
+      "round1Feedback": "{\"communication\":\"good\",\"technicalAssessment\":\"good\",\"problemSolving\":\"good\",\"overallPotential\":\"good\",\"comments\":\"\",\"recommendation\":\"proceed_to_round2\"}",
+      "round1Recommendation": "proceed_to_round2"
     },
     {
       "name": "Test",
-      "email": "t@t.com"
+      "email": "t@t.com",
+      "currentRound": null,
+      "status": "interview_completed",
+      "interviewStatus": "completed"
     },
     {
       "id": "fake",
@@ -448,6 +440,26 @@
       "name": "jan",
       "status": "applied",
       "appliedAt": "2026-02-27T09:22:59.000Z"
+    },
+    {
+      "id": "",
+      "round1Feedback": "{\"communication\":\"good \",\"technicalAssessment\":\"good\",\"problemSolving\":\"good\",\"overallPotential\":\"good\",\"comments\":\"\",\"recommendation\":\"proceed_to_round2\"}",
+      "round1Recommendation": "proceed_to_round2",
+      "name": "Unknown",
+      "email": "",
+      "status": "applied",
+      "appliedAt": "2026-03-02T16:23:15.000Z"
+    },
+    {
+      "id": "be2e60e7-c95b-456c-ad6a-f1594ce8243e",
+      "status": "interview_scheduled",
+      "interviewStatus": "tech_inter_sched",
+      "currentRound": 1,
+      "name": "Unknown",
+      "email": "",
+      "appliedAt": "2026-03-03T04:14:36.000Z",
+      "round1Feedback": "{\"communication\":\"good\",\"technicalAssessment\":\"good\",\"problemSolving\":\"good\",\"overallPotential\":\"good\",\"comments\":\"\",\"recommendation\":\"proceed_to_round2\"}",
+      "round1Recommendation": "proceed_to_round2"
     }
   ],
   "interviews": [

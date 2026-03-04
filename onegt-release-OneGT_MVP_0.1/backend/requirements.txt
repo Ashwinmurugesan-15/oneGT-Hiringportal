@@ -12,7 +12,8 @@ python-jose[cryptography]==3.3.0
 google-api-python-client==2.116.0
 google-auth-httplib2==0.2.0
 aiosmtplib==3.0.1
-psycopg2-binary==2.9.10
+pg8000==1.30.3
 bcrypt==4.2.1
 PyPDF2==3.0.1
 openpyxl==3.1.5
+httpx==0.26.0

@@ -1,0 +1,12 @@
+#:schema https://pyscript.net/wrangler-schema.json
+name = "hiring-portal-api"
+main = "main.py"
+compatibility_date = "2024-03-01"
+compatibility_flags = ["python_workers"]
+
+[vars]
+GUHATEK_API_URL = "https://api-dev.guhatek.com"
+PORT = "8000"
+LOG_LEVEL = "INFO"
+# Note: GUHATEK_API_KEY and ASSESSMENT_DATABASE_URL must be set as secrets
+# using `npx wrangler secret put <NAME>`

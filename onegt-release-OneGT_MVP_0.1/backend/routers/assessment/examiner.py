@@ -11,21 +11,12 @@ from middleware.auth_middleware import get_current_user, TokenData, require_mana
 from utils.assessment_db import (
     get_assessments_by_examiner, get_all_results, get_assessment,
     get_user_by_id, get_results, update_assessment, get_user_attempt_count,
-    db_get_users_by_role, upsert_user_from_token
+    get_users_by_role, upsert_user_from_token, _serialise
 )
 
 logger = logging.getLogger("chrms.assessment.examiner")
 
 router = APIRouter()
-
-def _serialise(obj: Any) -> Any:
-    from datetime import datetime
-    import uuid
-    if isinstance(obj, datetime):
-        return obj.isoformat()
-    if isinstance(obj, uuid.UUID):
-        return str(obj)
-    return obj
 
 @router.get("/assessments")
 def examiner_assessments(current_user: TokenData = Depends(require_manager_or_admin)):

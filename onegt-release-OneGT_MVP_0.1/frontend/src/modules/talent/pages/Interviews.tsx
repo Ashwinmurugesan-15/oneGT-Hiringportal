@@ -203,7 +203,38 @@ const Interviews = () => {
     setIsRound1DetailsOpen(false);
 
     const candidate = candidates.find(c => c.id === interview.candidateId);
-    if (!candidate) return;
+    if (!candidate) {
+      toast.error('Candidate linkage missing. Feedback cannot be saved correctly.');
+      // Initialize with empty defaults if candidate not found
+      setRound1Feedback({
+        communication: '',
+        technicalAssessment: '',
+        problemSolving: '',
+        overallPotential: '',
+        comments: '',
+        recommendation: 'proceed_to_round2',
+      });
+      setRound2Feedback({
+        communication: '',
+        technicalAssessment: '',
+        problemSolving: '',
+        overallPotential: '',
+        recommendation: '',
+        comments: '',
+        ctc: '',
+      });
+      setClientFeedback({
+        communication: '',
+        technicalAssessment: '',
+        problemSolving: '',
+        overallPotential: '',
+        feedback: '',
+        recommendation: 'proceed_to_offer',
+      });
+      setHasRound1Feedback(false);
+      setIsFeedbackOpen(true);
+      return;
+    }
 
     // Parse existing feedback for the CURRENT round to pre-fill the form
     let data: any = {};
@@ -371,7 +402,11 @@ const Interviews = () => {
     if (!selectedInterview || !emailContent.subject || !emailContent.body) return;
 
     const candidate = candidates.find(c => c.id === selectedInterview.candidateId);
-    if (!candidate?.email) {
+    if (!candidate) {
+      toast.error('Candidate linkage missing');
+      return;
+    }
+    if (!candidate.email) {
       toast.error('Candidate email not found');
       return;
     }
@@ -422,8 +457,12 @@ const Interviews = () => {
 
   const handleSendReminder = async (interview: Interview) => {
     const candidate = candidates.find(c => c.id === interview.candidateId);
-    if (!candidate?.email) {
-      toast.error('Candidate email not found');
+    if (!candidate) {
+      toast.error('Candidate linkage missing. Cannot determine recipient email.');
+      return;
+    }
+    if (!candidate.email) {
+      toast.error('Candidate email not found.');
       return;
     }
 

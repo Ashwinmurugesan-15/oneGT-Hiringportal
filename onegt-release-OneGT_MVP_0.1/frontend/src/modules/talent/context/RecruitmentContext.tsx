@@ -38,11 +38,49 @@ interface RecruitmentContextType {
 const RecruitmentContext = createContext<RecruitmentContextType | undefined>(undefined);
 
 export const RecruitmentProvider = ({ children }: { children: ReactNode }) => {
+    const { user, isAuthenticated, getAuthHeader } = useAuth();
     const [candidates, setCandidates] = useState<Candidate[]>([]);
     const [demands, setDemands] = useState<any[]>([]);
     const [benchResources, setBenchResources] = useState<BenchResource[]>(mockBenchResources);
     const [interviews, setInterviews] = useState<Interview[]>([]);
-    const { user, isAuthenticated, getAuthHeader } = useAuth();
+
+    const mapApiInterview = (i: any): Interview => {
+        // Handle ISO date or simple date
+        let datePart = i.interview_date || i.scheduledAt || '';
+        if (typeof datePart === 'string' && datePart.includes('T')) {
+            datePart = datePart.split('T')[0];
+        }
+
+        const scheduledAt = datePart
+            ? new Date(`${datePart}${i.interview_time ? 'T' + i.interview_time : ''}`)
+            : (i.scheduledAt ? new Date(i.scheduledAt) : new Date());
+
+        const mapRound = (round: any): InterviewRound => {
+            if (!round) return 1;
+            const r = String(round).toLowerCase();
+            if (r.includes('client')) return 'client';
+            if (r.includes('1')) return 1;
+            if (r.includes('2')) return 2;
+            if (r.includes('3')) return 3;
+            return 1;
+        };
+
+        return {
+            id: i.id,
+            candidateId: i.candidateId || '',
+            candidateName: i.candidateName || i.full_name || 'Candidate',
+            demandId: i.demandId || '',
+            demandTitle: i.demandTitle || i.position || 'Unknown Position',
+            round: mapRound(i.round || i.interview_round),
+            scheduledAt,
+            interviewerId: i.interviewerId || '4',
+            interviewerName: i.interviewerName || i.interviewer_name || 'Interviewer',
+            interviewerEmail: i.interviewerEmail || '',
+            meetLink: i.meetLink || i.meeting_link || '',
+            status: i.status || 'scheduled',
+            feedback: i.feedback
+        };
+    };
 
     // Compute filtered candidates based on user role and email
     const filteredCandidates = useMemo(() => {
@@ -85,15 +123,66 @@ export const RecruitmentProvider = ({ children }: { children: ReactNode }) => {
 
                 const allCandidates = cands.map((c: any) => ({
                     ...c,
+                    name: c.name || c.full_name || 'Unknown',
                     appliedAt: c.appliedAt ? new Date(c.appliedAt) : new Date(),
                     dateOfJoining: c.dateOfJoining ? new Date(c.dateOfJoining) : undefined
                 }));
 
                 setCandidates(allCandidates);
-                setInterviews(ints.map((i: any) => ({
-                    ...i,
-                    scheduledAt: i.scheduledAt ? new Date(i.scheduledAt) : new Date()
-                })));
+                const mappedInterviews = ints.map((i: any) => {
+                    const interview = mapApiInterview(i);
+                    // Date-based heuristic linkage
+                    const meetingDateStr = interview.scheduledAt.toISOString().split('T')[0];
+
+                    const normalizeDate = (d: any) => {
+                        if (!d) return null;
+                        try {
+                            return new Date(d).toISOString().split('T')[0];
+                        } catch {
+                            return null;
+                        }
+                    };
+
+                    const matchingCandidate = allCandidates.find((c: any) => {
+                        const r1 = normalizeDate(c.round1_dt);
+                        const r2 = normalizeDate(c.round2_dt);
+                        const r3 = normalizeDate(c.round3_dt);
+
+                        const dateMatch = r1 === meetingDateStr || r2 === meetingDateStr || r3 === meetingDateStr;
+                        if (!dateMatch) return false;
+
+                        // Tie-breaker: Position match
+                        if (interview.demandTitle && interview.demandTitle !== 'Unknown Position') {
+                            const candPos = (c.interestedPosition || c.position || '').toLowerCase();
+                            const intPos = interview.demandTitle.toLowerCase();
+                            if (candPos && (candPos.includes(intPos) || intPos.includes(candPos))) {
+                                return true;
+                            }
+                        }
+                        return true; // Default to true if date matches and no position info
+                    });
+
+                    if (matchingCandidate) {
+                        interview.candidateId = matchingCandidate.id;
+                        interview.candidateName = matchingCandidate.name;
+                        // Use candidate's demandId if meeting doesn't have a reliable one
+                        if (!interview.demandId || interview.demandId === '') {
+                            interview.demandId = matchingCandidate.demandId;
+                        }
+
+                        // Determine status based on candidate feedback
+                        const round = Number(interview.round);
+                        const hasFeedback = (round === 1 && matchingCandidate.round1Feedback) ||
+                            (round === 2 && matchingCandidate.round2Feedback) ||
+                            (interview.round === 'client' && matchingCandidate.clientFeedback);
+
+                        if (hasFeedback) {
+                            interview.status = 'completed';
+                        }
+                    }
+                    return interview;
+                });
+                setInterviews(mappedInterviews);
                 setDemands(dems);
             } catch (error) {
                 console.error('Failed to fetch data:', error);

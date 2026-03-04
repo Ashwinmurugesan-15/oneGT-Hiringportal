@@ -148,7 +148,11 @@ from contextlib import asynccontextmanager
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Run on startup
-    await _check_external_apis()
+    try:
+        await _check_external_apis()
+    except Exception as e:
+        logger.error(f"Startup API check failed: {e}")
+
     try:
         init_db()
     except Exception as e:
@@ -271,6 +275,7 @@ async def health_check():
     return {"status": "healthy"}
 
 # Mount static files for production (must be after API routes)
+
 if STATIC_DIR.exists():
     app.mount("/assets", StaticFiles(directory=STATIC_DIR / "assets"), name="assets")
     

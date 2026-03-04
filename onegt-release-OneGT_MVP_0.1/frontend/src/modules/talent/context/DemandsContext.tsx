@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Demand } from '@/types/recruitment';
 import { useAuth } from './AuthContext';
+import { toast } from 'sonner';
 
 interface DemandsContextType {
     demands: Demand[];
@@ -19,6 +20,24 @@ export const DemandsProvider = ({ children }: { children: ReactNode }) => {
     const [demands, setDemands] = useState<Demand[]>([]);
     const { isAuthenticated, getAuthHeader } = useAuth();
 
+    const mapApiDemand = (d: any): Demand => ({
+        id: d.id,
+        title: d.job_title || d.title || 'Untitled',
+        role: d.role || '',
+        experience: d.experience || '',
+        location: d.location || '',
+        openings: d.number_of_openings || d.openings || 0,
+        skills: Array.isArray(d.required_skills) ? d.required_skills : (Array.isArray(d.skills) ? d.skills : []),
+        status: (d.status || 'open').toLowerCase(),
+        createdBy: d.createdBy || 'System',
+        createdAt: new Date(d.created_at || d.createdAt || new Date()),
+        applicants: d.applicants || 0,
+        interviewed: d.interviewed || 0,
+        offers: d.offers || 0,
+        rejected: d.rejected || 0,
+        reopenedAt: d.reopenedAt ? new Date(d.reopenedAt) : undefined
+    });
+
     useEffect(() => {
         const fetchDemands = async () => {
             if (!isAuthenticated) {
@@ -33,13 +52,7 @@ export const DemandsProvider = ({ children }: { children: ReactNode }) => {
                 if (!res.ok) throw new Error(`API error: ${res.status}`);
 
                 const data = await res.json();
-
-                setDemands(data.map((d: any) => ({
-                    ...d,
-                    skills: Array.isArray(d.skills) ? d.skills : [],
-                    createdAt: new Date(d.createdAt),
-                    reopenedAt: d.reopenedAt ? new Date(d.reopenedAt) : undefined
-                })));
+                setDemands(data.map(mapApiDemand));
             } catch (error) {
                 console.error('Failed to fetch demands:', error);
             }
@@ -67,8 +80,12 @@ export const DemandsProvider = ({ children }: { children: ReactNode }) => {
                 },
                 body: JSON.stringify(newDemandData),
             });
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(errorText || `Failed to create demand, status: ${res.status}`);
+            }
             const savedDemand = await res.json();
-            setDemands((prev) => [{ ...savedDemand, createdAt: new Date(savedDemand.createdAt) }, ...prev]);
+            setDemands((prev) => [mapApiDemand(savedDemand), ...prev]);
         } catch (error) {
             console.error('Failed to add demand:', error);
         }
@@ -84,9 +101,13 @@ export const DemandsProvider = ({ children }: { children: ReactNode }) => {
                 },
                 body: JSON.stringify(updatedDemand),
             });
-            const data = await res.json();
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(errorText || `Failed to update demand, status: ${res.status}`);
+            }
+            const savedDemand = await res.json();
             setDemands((prev) =>
-                prev.map((d) => (d.id === updatedDemand.id ? { ...data, createdAt: new Date(data.createdAt) } : d))
+                prev.map((d) => (d.id === savedDemand.id ? mapApiDemand(savedDemand) : d))
             );
         } catch (error) {
             console.error('Failed to update demand:', error);
@@ -114,11 +135,22 @@ export const DemandsProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const deleteDemand = async (id: string) => {
-        const demand = demands.find((d) => d.id === id);
-        if (!demand) return;
-        // Soft-delete: mark status as 'deleted'
-        await updateDemand({ ...demand, status: 'deleted' });
+    const deleteDemand = async (id: string | number) => {
+        try {
+            const res = await fetch(`/api/talent/demands/${id}`, {
+                method: 'DELETE',
+                headers: getAuthHeader()
+            });
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(errorText || `Failed to delete demand, status: ${res.status}`);
+            }
+            setDemands((prev) => prev.filter((d) => String(d.id) !== String(id)));
+            toast.success('Demand deleted successfully');
+        } catch (error) {
+            console.error('Failed to delete demand:', error);
+            toast.error('Failed to delete demand');
+        }
     };
 
 

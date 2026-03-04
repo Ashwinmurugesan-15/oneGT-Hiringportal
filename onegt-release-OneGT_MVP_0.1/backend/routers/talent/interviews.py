@@ -45,18 +45,38 @@ async def get_interviews(current_user: TokenData = Depends(get_current_user)):
 @trace_exceptions_async
 async def add_interview(interview: dict, current_user: TokenData = Depends(get_current_user)):
     try:
-        response = await gapi.schedule_meet(interview)
+        from datetime import datetime
+        dt_str = interview.get("scheduledAt", "")
+        i_date, i_time = "", ""
+        if dt_str:
+            try:
+                if "T" in dt_str:
+                    parts = dt_str.split("T")
+                    i_date = parts[0]
+                    i_time = parts[1][:5]
+                else:
+                    i_date = dt_str
+            except Exception:
+                pass
+
+        api_payload = {
+            "position": interview.get("demandTitle", "Unknown Position"),
+            "interviewRound": interview.get("round", "Round 1"),
+            "interviewDate": i_date,
+            "interviewTime": i_time,
+            "interviewerName": interview.get("interviewerName", "Interviewer"),
+            "meetLink": interview.get("meetLink", ""),
+            "candidateId": interview.get("candidateId", ""),
+            "candidateName": interview.get("candidateName", "")
+        }
+        
+        response = await gapi.schedule_meet(api_payload)
         if response.get("success"):
+            api_cache.clear(CACHE_KEY)
             return JSONResponse(content={"id": response.get("id"), **interview}, status_code=201)
 
         if response.get("status") == 404:
-            db = await read_db()
-            interview_id = str(int(time.time() * 1000))
-            new_interview = {"id": interview_id, **interview, "createdAt": time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime())}
-            db.setdefault("interviews", []).append(new_interview)
-            await write_db(db)
-            api_cache.clear(CACHE_KEY)
-            return JSONResponse(content=new_interview, status_code=201)
+            raise HTTPException(404, "Endpoint not found on upstream API")
 
         raise HTTPException(400, response.get("message") or response.get("error") or "Failed to schedule interview")
     except HTTPException:
@@ -73,22 +93,41 @@ async def update_interview(interview: dict, current_user: TokenData = Depends(ge
         raise HTTPException(400, "Interview ID is required")
     rest = {k: v for k, v in interview.items() if k != "id"}
 
+    api_payload = {}
+    if "demandTitle" in rest: api_payload["position"] = rest["demandTitle"]
+    if "round" in rest: api_payload["interviewRound"] = rest["round"]
+    if "interviewerName" in rest: api_payload["interviewerName"] = rest["interviewerName"]
+    if "meetLink" in rest: api_payload["meetLink"] = rest["meetLink"]
+    
+    if "scheduledAt" in rest:
+        dt_str = rest["scheduledAt"]
+        try:
+            if dt_str and "T" in dt_str:
+                parts = dt_str.split("T")
+                api_payload["interviewDate"] = parts[0]
+                api_payload["interviewTime"] = parts[1][:5]
+            elif dt_str:
+                api_payload["interviewDate"] = dt_str
+        except Exception:
+            pass
+
     try:
-        response = await gapi.update_meet(interview_id, rest)
+        if not api_payload:
+            # If we are only updating fields like 'status' or 'feedback' which are 
+            # handled by the frontend/candidate context, we don't need to call Guhatek
+            if rest.get("status") or rest.get("feedback"):
+                return {"id": interview_id, "status": rest.get("status", "scheduled"), "message": "Local status update successful"}
+            
+        response = await gapi.update_meet(interview_id, api_payload if api_payload else rest)
         if response.get("success"):
+            api_cache.clear(CACHE_KEY)
             return {"id": interview_id, **(response.get("updated") or {})}
 
         if response.get("status") == 404:
-            db = await read_db()
-            interviews = db.get("interviews", [])
-            idx = next((i for i, iv in enumerate(interviews) if iv.get("id") == interview_id), -1)
-            if idx != -1:
-                db["interviews"][idx] = {**interviews[idx], **rest}
-                await write_db(db)
-                return JSONResponse(content=db["interviews"][idx])
-            raise HTTPException(404, "Interview not found locally")
+            raise HTTPException(404, "Interview not found on upstream API")
 
-        raise HTTPException(400, response.get("message") or response.get("error") or "Failed to update interview")
+        error_msg = response.get("message") or response.get("error") or "Failed to update interview"
+        raise HTTPException(400, f"Upstream API Error: {error_msg}")
     except HTTPException:
         raise
     except Exception as exc:

@@ -1,0 +1,6 @@
+name = "hiring-portal-ui"
+pages_build_output_dir = "dist"
+
+[vars]
+# You MUST update this after deploying the backend worker
+VITE_API_BASE_URL = "https://hiring-portal-api.your-subdomain.workers.dev"

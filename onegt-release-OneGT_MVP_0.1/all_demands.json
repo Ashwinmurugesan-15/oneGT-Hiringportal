@@ -1,0 +1,49 @@
+{
+  "data": [
+    {
+      "id": "6bf9e4bd-31f4-4996-88ea-c8009c410472",
+      "job_title": "Developer",
+      "role": "Faster Tester",
+      "experience": "2-3 years",
+      "location": "Pune",
+      "number_of_openings": 3,
+      "required_skills": [
+        "java",
+        "python"
+      ],
+      "status": "Open",
+      "created_at": "2026-03-02T08:43:28.606Z",
+      "updated_at": "2026-03-02T08:43:28.606Z"
+    },
+    {
+      "id": "14a0a550-7a6e-4cc3-b9ea-741438305b50",
+      "job_title": "Updated Test",
+      "role": "engineer",
+      "experience": "1-3",
+      "location": "chennai",
+      "number_of_openings": 1,
+      "required_skills": [
+        "java",
+        "python"
+      ],
+      "status": "Open",
+      "created_at": "2026-03-02T12:39:52.300Z",
+      "updated_at": "2026-03-02T12:39:52.300Z"
+    },
+    {
+      "id": "6c1f0ce5-80d4-4de4-84ef-cc77b3e2a779",
+      "job_title": "Testing ",
+      "role": "QA",
+      "experience": "1-2 years",
+      "location": "Remote",
+      "number_of_openings": 1,
+      "required_skills": [
+        "Testing",
+        "Automation"
+      ],
+      "status": "Open",
+      "created_at": "2026-03-02T15:58:24.122Z",
+      "updated_at": "2026-03-02T15:58:24.122Z"
+    }
+  ]
+}

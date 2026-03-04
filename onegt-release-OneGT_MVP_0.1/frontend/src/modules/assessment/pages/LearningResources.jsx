@@ -4,16 +4,24 @@ import { useAuth } from '../context/AuthContext';
 import { useAssessment } from '../context/AssessmentContext';
 import LearningResourceCard from '../components/LearningResourceCard';
 import LearningResourceForm from '../components/LearningResourceForm';
-import AnalyticsModal from '../components/AnalyticsModal';
+import { useLocation } from 'react-router-dom';
 
 export default function LearningResources() {
     const { user, getAuthHeader } = useAuth();
     const { learningResources, loading, refreshResources } = useAssessment();
-    const [showForm, setShowForm] = useState(false);
+    const location = useLocation();
+    const [showForm, setShowForm] = useState(location.state?.openAddResource || false);
     const [editingResource, setEditingResource] = useState(null);
     const [saving, setSaving] = useState(false);
     const [analyticsModalOpen, setAnalyticsModalOpen] = useState(false);
     const [selectedResource, setSelectedResource] = useState(null);
+
+    // Clear the state so refreshing the page doesn't keep opening the form
+    useEffect(() => {
+        if (location.state?.openAddResource) {
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state]);
 
     const handleSave = async (data) => {
         setSaving(true);

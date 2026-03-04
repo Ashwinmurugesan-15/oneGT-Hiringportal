@@ -76,6 +76,20 @@ export interface Demand {
   offers: number;
   rejected: number;
   reopenedAt?: Date;
+  // New fields for Job Postings Alignment
+  department?: string;
+  roleCategory?: string;
+  level?: string;
+  employmentType?: string;
+  workMode?: string;
+  salary?: string;
+  description?: string;
+  responsibilities?: string[];
+  requirements?: string[];
+  niceToHave?: string[];
+  businessImpact?: string[];
+  isActive?: boolean;
+  postedDate?: string;
 }
 
 export interface Candidate {

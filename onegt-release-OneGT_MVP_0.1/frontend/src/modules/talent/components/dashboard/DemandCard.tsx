@@ -84,12 +84,14 @@ export const DemandCard = ({ demand, onViewDetails, onEdit, onClose, onDelete, o
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="bg-popover">
-                  <DropdownMenuItem onClick={(e) => {
-                    e.stopPropagation();
-                    onEdit?.();
-                  }}>
-                    Edit Demand
-                  </DropdownMenuItem>
+                  {onEdit && (
+                    <DropdownMenuItem onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit();
+                    }}>
+                      Edit Demand
+                    </DropdownMenuItem>
+                  )}
                   {(demand.status || 'open') === 'open' && (
                     <DropdownMenuItem onClick={(e) => {
                       e.stopPropagation();
@@ -98,12 +100,14 @@ export const DemandCard = ({ demand, onViewDetails, onEdit, onClose, onDelete, o
                       Close Position
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete?.();
-                  }} className="text-destructive focus:text-destructive">
-                    Delete Position
-                  </DropdownMenuItem>
+                  {onDelete && (
+                    <DropdownMenuItem onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete();
+                    }}>
+                      Delete Position
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             )}

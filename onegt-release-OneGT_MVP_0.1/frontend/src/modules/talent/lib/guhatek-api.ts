@@ -12,7 +12,7 @@ export interface ExternalApplication {
 
 // Helper to get config lazily
 const getConfig = () => {
-    const useMockApi = false; // ✅ Live API — api-careerpage.guhatek.com
+    const useMockApi = false; // ✅ Live API — api-dev.guhatek.com
     const meta = import.meta as any;
     const apiKey = meta.env?.VITE_GUHATEK_API_KEY || '';
     const apiUrl = meta.env?.VITE_GUHATEK_API_URL || '';

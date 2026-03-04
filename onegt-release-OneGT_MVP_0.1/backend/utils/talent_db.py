@@ -19,11 +19,19 @@ def get_lock():
 
 async def read_db() -> dict:
     async with get_lock():
+        if not DB_PATH.exists():
+            # On Vercel / serverless environments, the local JSON file is not present.
+            # Return an empty structure so callers can still work with Guhatek API data.
+            return {"candidates": [], "interviews": [], "demands": []}
         with open(DB_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
 
 
 async def write_db(data: dict) -> None:
     async with get_lock():
+        if not DB_PATH.exists():
+            # Can't persist locally on serverless – silently skip.
+            return
         with open(DB_PATH, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
+

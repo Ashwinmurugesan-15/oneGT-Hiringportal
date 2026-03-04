@@ -86,20 +86,28 @@ class EmailService:
         }
 
     @trace_exceptions_async
-    async def send_email(self, to_email: str, subject: str, body: str, html: bool = False):
+    async def send_email(self, to_email: str, subject: str, body: str, html: bool = False, use_talent_creds: bool = False):
         """Generic method to send an email asynchronously."""
-        # Minimum requirement: User for OAuth2 or User+Pass for standard
-        if not settings.SMTP_USER:
-            logger.warning("SMTP user not configured. Skipping email.")
-            return False
-            
         try:
-            auth_params = await self._get_auth_params()
-            if not auth_params:
-                return False
+            if use_talent_creds:
+                talent_user = "ashlog559@gmail.com"
+                talent_pass = "viup ahog suqt oefm"
+                auth_params = {
+                    "username": talent_user,
+                    "password": talent_pass
+                }
+                sender_email = talent_user
+            else:
+                if not settings.SMTP_USER:
+                    logger.warning("SMTP user not configured. Skipping email.")
+                    return False
+                    
+                auth_params = await self._get_auth_params()
+                if not auth_params:
+                    return False
+                sender_email = settings.FROM_EMAIL or settings.SMTP_USER
 
             message = EmailMessage()
-            sender_email = settings.FROM_EMAIL or settings.SMTP_USER
             message["From"] = formataddr(("OneGT (HRMS)", sender_email))
             message["To"] = to_email
             message["Subject"] = subject

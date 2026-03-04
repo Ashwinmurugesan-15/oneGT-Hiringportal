@@ -1,0 +1,12 @@
+.venv
+__pycache__
+*.pyc
+.env
+.env.local
+.git
+node_modules
+server.log
+debug_server.log
+*.txt
+!cf-requirements.txt
+!token.txt

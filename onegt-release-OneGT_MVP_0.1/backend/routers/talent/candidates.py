@@ -122,6 +122,8 @@ async def get_candidates(current_user: TokenData = Depends(get_current_user)):
         return JSONResponse(content=db.get("candidates", []))
 
 
+
+
 @router.post("/candidates/apply", status_code=201)
 @trace_exceptions_async
 async def apply_candidate(
