@@ -119,14 +119,19 @@ export const DemandsProvider = ({ children }: { children: ReactNode }) => {
                 const errorText = await res.text();
                 throw new Error(errorText || `Failed to update demand, status: ${res.status}`);
             }
+            // Merge API response on top of the full updatedDemand so enhanced
+            // fields (department, level, salary, etc.) are never lost even if
+            // the backend only echoes back the basic fields.
             const savedDemand = await res.json();
+            const merged: Demand = { ...updatedDemand, ...mapApiDemand({ ...updatedDemand, ...savedDemand }) };
             setDemands((prev) =>
-                prev.map((d) => (d.id === savedDemand.id ? mapApiDemand(savedDemand) : d))
+                prev.map((d) => (d.id === merged.id ? merged : d))
             );
         } catch (error) {
             console.error('Failed to update demand:', error);
         }
     };
+
 
     const closeDemand = async (id: string) => {
         const demand = demands.find((d) => d.id === id);

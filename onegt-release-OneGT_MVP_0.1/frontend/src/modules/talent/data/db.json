@@ -63,7 +63,14 @@
       "experience": "5-7",
       "location": "Coimbatore",
       "openings": 10,
-      "skills": ["AWS", "Docker", "jenkins", "S3bucket", "linux", "grafana"],
+      "skills": [
+        "AWS",
+        "Docker",
+        "jenkins",
+        "S3bucket",
+        "linux",
+        "grafana"
+      ],
       "status": "open",
       "createdBy": "Current User",
       "rejected": 0,
@@ -78,8 +85,15 @@
       "workMode": "Hybrid",
       "salary": "15-20 LPA",
       "description": "We are looking for a Senior DevOps Engineer to lead our infrastructure automation efforts.",
-      "responsibilities": ["Manage AWS infrastructure", "Optimize CI/CD pipelines", "Mentor junior engineers"],
-      "requirements": ["5+ years experience", "Strong AWS & Docker skills"],
+      "responsibilities": [
+        "Manage AWS infrastructure",
+        "Optimize CI/CD pipelines",
+        "Mentor junior engineers"
+      ],
+      "requirements": [
+        "5+ years experience",
+        "Strong AWS & Docker skills"
+      ],
       "isActive": true,
       "postedDate": "2026-02-26"
     },
@@ -90,7 +104,11 @@
       "experience": "4-7",
       "location": "chennai",
       "openings": 10,
-      "skills": ["Aws", "s3", "docker"],
+      "skills": [
+        "Aws",
+        "s3",
+        "docker"
+      ],
       "status": "open",
       "createdBy": "Current User",
       "rejected": 0,
@@ -105,8 +123,14 @@
       "workMode": "Onsite",
       "salary": "10-15 LPA",
       "description": "Join our DevOps team in Chennai.",
-      "responsibilities": ["Cloud maintenance", "Automation"],
-      "requirements": ["Docker", "S3"],
+      "responsibilities": [
+        "Cloud maintenance",
+        "Automation"
+      ],
+      "requirements": [
+        "Docker",
+        "S3"
+      ],
       "isActive": true,
       "postedDate": "2026-02-26"
     }
@@ -460,6 +484,13 @@
       "appliedAt": "2026-03-03T04:14:36.000Z",
       "round1Feedback": "{\"communication\":\"good\",\"technicalAssessment\":\"good\",\"problemSolving\":\"good\",\"overallPotential\":\"good\",\"comments\":\"\",\"recommendation\":\"proceed_to_round2\"}",
       "round1Recommendation": "proceed_to_round2"
+    },
+    {
+      "id": "4b3f0477-bf9a-42c8-8e0e-e6068b79a91b",
+      "status": "selected",
+      "name": "Unknown",
+      "email": "",
+      "appliedAt": "2026-03-04T05:55:46.000Z"
     }
   ],
   "interviews": [

@@ -139,6 +139,8 @@ const Candidates = () => {
     locationPreference: '',
     currentCTC: '',
     expectedCTC: '',
+    offeredCTC: '',
+    offeredPosition: '',
     noticePeriod: '',
     isServingNotice: false,
     isImmediateJoiner: false,
@@ -352,6 +354,8 @@ const Candidates = () => {
       locationPreference: candidate.locationPreference || '',
       currentCTC: candidate.currentCTC || '',
       expectedCTC: candidate.expectedCTC || '',
+      offeredCTC: (candidate as any).offeredCTC || '',
+      offeredPosition: (candidate as any).offeredPosition || '',
       noticePeriod: candidate.noticePeriod || '',
       isServingNotice: candidate.isServingNotice || false,
       isImmediateJoiner: candidate.isImmediateJoiner || false,
@@ -585,6 +589,8 @@ const Candidates = () => {
       locationPreference: '',
       currentCTC: '',
       expectedCTC: '',
+      offeredCTC: '',
+      offeredPosition: '',
       noticePeriod: '',
       isServingNotice: false,
       isImmediateJoiner: false,
@@ -710,6 +716,8 @@ const Candidates = () => {
               locationPreference: selectedCandidate?.locationPreference || '',
               currentCTC: String(selectedCandidate?.currentCTC || ''),
               expectedCTC: String(selectedCandidate?.expectedCTC || ''),
+              offeredCTC: String((selectedCandidate as any)?.offeredCTC || ''),
+              offeredPosition: String((selectedCandidate as any)?.offeredPosition || ''),
               noticePeriod: selectedCandidate?.noticePeriod || '',
               isServingNotice: selectedCandidate?.isServingNotice || false,
               isImmediateJoiner: selectedCandidate?.isImmediateJoiner || false,
@@ -1009,6 +1017,28 @@ const Candidates = () => {
                   />
                 </div>
               </div>
+
+              {/* Offered CTC & Offered Position — edit mode only */}
+              {isEditMode && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Offered CTC</Label>
+                    <Input
+                      value={newCandidateData.offeredCTC}
+                      onChange={(e) => setNewCandidateData({ ...newCandidateData, offeredCTC: e.target.value })}
+                      placeholder="e.g. 18 LPA"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Offered Position</Label>
+                    <Input
+                      value={newCandidateData.offeredPosition}
+                      onChange={(e) => setNewCandidateData({ ...newCandidateData, offeredPosition: e.target.value })}
+                      placeholder="e.g. Senior Engineer"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={handleCloseDialog}>
