@@ -115,9 +115,16 @@ export const DemandsProvider = ({ children }: { children: ReactNode }) => {
                 },
                 body: JSON.stringify(updatedDemand),
             });
+
+            if (res.status === 429) {
+                toast.error('Too many requests. Please wait a moment and try again.');
+                return;
+            }
+
             if (!res.ok) {
-                const errorText = await res.text();
-                throw new Error(errorText || `Failed to update demand, status: ${res.status}`);
+                const errorData = await res.json().catch(() => ({}));
+                const errorText = errorData.detail || errorData.message || `Failed to update demand, status: ${res.status}`;
+                throw new Error(errorText);
             }
             // Merge API response on top of the full updatedDemand so enhanced
             // fields (department, level, salary, etc.) are never lost even if
@@ -127,8 +134,10 @@ export const DemandsProvider = ({ children }: { children: ReactNode }) => {
             setDemands((prev) =>
                 prev.map((d) => (d.id === merged.id ? merged : d))
             );
-        } catch (error) {
+            toast.success('Demand updated successfully!');
+        } catch (error: any) {
             console.error('Failed to update demand:', error);
+            toast.error(error.message || 'Failed to update demand');
         }
     };
 

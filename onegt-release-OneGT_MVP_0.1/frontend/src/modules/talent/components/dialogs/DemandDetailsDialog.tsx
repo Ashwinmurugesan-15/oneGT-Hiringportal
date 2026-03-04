@@ -89,6 +89,7 @@ export const DemandDetailsDialog = ({
   const [editData, setEditData] = useState<Demand | null>(demand);
   const [showMore, setShowMore] = useState(false);
   const [editTab, setEditTab] = useState('basic');
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -96,6 +97,7 @@ export const DemandDetailsDialog = ({
       setEditData(demand);
       setShowMore(false);
       setEditTab('basic');
+      setIsSaving(false);
     }
   }, [open, demand, mode]);
 
@@ -105,12 +107,19 @@ export const DemandDetailsDialog = ({
   const liveRejectedCount = candidates.filter(c => c.demandId === demand.id && c.status === 'rejected').length;
   const rejectedCount = liveRejectedCount > 0 ? liveRejectedCount : (demand.rejected || 0);
 
-  const handleSave = () => {
-    if (!editData) return;
-    onSave?.(editData);
-    toast.success('Demand updated successfully!');
-    setIsEditing(false);
-    onOpenChange(false);
+  const handleSave = async () => {
+    if (!editData || isSaving) return;
+    setIsSaving(true);
+    try {
+      await onSave?.(editData);
+      // Wait a moment for context to update before closing
+      setIsEditing(false);
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error in handleSave:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleClose = () => {
@@ -289,8 +298,9 @@ export const DemandDetailsDialog = ({
                   <Button variant="outline" onClick={() => { setIsEditing(false); setEditTab('basic'); }}>
                     <X className="h-4 w-4 mr-1" />Cancel
                   </Button>
-                  <Button onClick={handleSave}>
-                    <Save className="h-4 w-4 mr-1" />Save Changes
+                  <Button onClick={handleSave} disabled={isSaving}>
+                    <Save className="h-4 w-4 mr-1" />
+                    {isSaving ? 'Saving...' : 'Save Changes'}
                   </Button>
                 </DialogFooter>
               </TabsContent>

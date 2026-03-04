@@ -90,33 +90,52 @@ def clear_token_cache() -> None:
 async def _authed_request(
     method: str,
     path: str,
-    retries: int = 1,
+    retries: int = 2,
+    base_delay: float = 1.0,
     **kwargs,
 ) -> Any:
     cfg = _get_config()
     url = f"{cfg['api_url']}{path}"
 
     for attempt in range(retries + 1):
-        token = await _get_auth_token()
-        headers = kwargs.pop("headers", {})
-        headers["Authorization"] = f"Bearer {token}"
+        try:
+            token = await _get_auth_token()
+            headers = kwargs.get("headers", {})
+            headers["Authorization"] = f"Bearer {token}"
+            
+            # Ensure headers is passed back into kwargs if we modified it
+            kwargs["headers"] = headers
 
-        async with httpx.AsyncClient(verify=False, timeout=20) as client:
-            resp = await client.request(method, url, headers=headers, **kwargs)
+            async with httpx.AsyncClient(verify=False, timeout=20) as client:
+                resp = await client.request(method, url, **kwargs)
 
-        if resp.status_code >= 500 and attempt < retries:
-            logger.warning("⚠️ Guhatek API 5xx, retrying (%d left)…", retries - attempt)
-            await asyncio.sleep(1)
-            continue
-
-        if resp.status_code == 401:
-            # Token may be stale – clear and retry once
-            clear_token_cache()
-            if attempt < retries:
+            # Handle Rate Limiting (429) and Server Errors (5xx) with retries
+            if (resp.status_code == 429 or resp.status_code >= 500) and attempt < retries:
+                delay = base_delay * (2 ** attempt)  # Exponential backoff: 1s, 2s...
+                logger.warning(f"⚠️ Guhatek API {resp.status_code}, retrying in {delay}s (%d left)…", retries - attempt)
+                await asyncio.sleep(delay)
                 continue
 
-        resp.raise_for_status()
-        return resp.json()
+            if resp.status_code == 401:
+                # Token may be stale – clear and retry once
+                clear_token_cache()
+                if attempt < retries:
+                    continue
+
+            resp.raise_for_status()
+            return resp.json()
+            
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 429 and attempt >= retries:
+                logger.error("❌ Guhatek API rate limit exceeded after retries")
+                # Return a structured error that the router can pass through
+                return {"success": False, "status": 429, "error": "Too many requests", "message": "Upstream API rate limit exceeded. Please try again later."}
+            if attempt >= retries:
+                raise
+        except Exception as exc:
+            if attempt >= retries:
+                logger.error(f"❌ Guhatek API request failed: {exc}")
+                raise
 
     return None
 

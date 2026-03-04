@@ -72,8 +72,8 @@ async def add_demand(demand: dict, current_user: TokenData = Depends(get_current
             api_cache.clear(CACHE_KEY)
             return JSONResponse(content={"id": response.get("id"), **demand}, status_code=201)
 
-        if response.get("status") == 404:
-            raise HTTPException(404, "Endpoint not found on upstream API")
+        if response.get("status") == 429:
+            raise HTTPException(429, response.get("message") or "Too many requests to upstream API")
 
         raise HTTPException(400, response.get("message") or response.get("error") or "Failed to create demand")
     except HTTPException:
@@ -141,6 +141,9 @@ async def update_demand(body: dict, current_user: TokenData = Depends(get_curren
 
         if response.get("status") == 404:
             raise HTTPException(404, "Demand not found remotely")
+        
+        if response.get("status") == 429:
+            raise HTTPException(429, response.get("message") or "Too many requests to upstream API")
 
         error_msg = response.get("message") or response.get("error") or "Failed to update demand"
         raise HTTPException(400, f"Upstream API Error: {error_msg}")
