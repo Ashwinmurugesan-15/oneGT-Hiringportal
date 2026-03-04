@@ -146,39 +146,74 @@ async def get_applications() -> list:
     return _extract_list(data, "data", "applications")
 
 
+_debug_logged = False
+
 def _normalize_job_opening(job: dict) -> dict:
     """
-    Ensures a job opening object contains all fields required by the 
-    new frontend Job Postings model.
+    Maps a Guhatek job opening (snake_case) to the frontend Job Postings model.
+    Confirmed Guhatek fields: job_title, role, experience, location,
+    number_of_openings, required_skills, status, created_at, updated_at
     """
-    status = str(job.get("jobStatus", "Open")).lower()
-    
-    # Mapping logic for 13 requested fields
+    # Guhatek uses snake_case field names
+    title = (
+        job.get("job_title")
+        or job.get("jobTitle")
+        or job.get("title")
+        or "Untitled Role"
+    )
+
+    # Guhatek status is uppercase: "OPEN", "CLOSED", "ON_HOLD", "DELETED"
+    raw_status = str(job.get("status") or job.get("jobStatus") or "OPEN")
+    status = raw_status.lower().replace("_", " ")  # "ON HOLD", "open", "closed"
+    # Normalise back to frontend expected values
+    if "hold" in status:
+        status = "on_hold"
+    elif status in ("closed", "deleted"):
+        status = status
+    else:
+        status = "open"
+
+    skills_raw = (
+        job.get("required_skills")
+        or job.get("requireSkill")
+        or job.get("skills")
+        or []
+    )
+    skills = skills_raw if isinstance(skills_raw, list) else []
+
+    created_at = job.get("created_at") or job.get("createdAt") or time.strftime("%Y-%m-%dT%H:%M:%SZ")
+    openings = int(
+        job.get("number_of_openings")
+        or job.get("numberOfOpenings")
+        or job.get("openings")
+        or 1
+    )
+
     return {
         "id": str(job.get("id", "")),
-        "title": job.get("jobTitle", "Untitled Role"),
-        "role": job.get("role", "Software Engineer"),
+        "title": title,
+        "role": job.get("role", "") or title,
         "experience": job.get("experience", "Not Specified"),
         "location": job.get("location", "Remote"),
-        "openings": int(job.get("numberOfOpenings", 1)),
-        "skills": job.get("requireSkill", []) if isinstance(job.get("requireSkill"), list) else [],
+        "openings": openings,
+        "skills": skills,
         "status": status,
-        "createdAt": job.get("createdAt", time.strftime("%Y-%m-%dT%H:%M:%SZ")),
-        
-        # Enhanced Fields
+        "createdAt": created_at,
+
+        # Enhanced fields (will be set when Guhatek stores them, else smart defaults)
         "department": job.get("department", "Software-Development"),
-        "roleCategory": job.get("roleCategory", job.get("role", "Engineering")),
+        "roleCategory": job.get("roleCategory") or job.get("role") or "Engineering",
         "level": job.get("level", "Mid"),
         "employmentType": job.get("employmentType", "Full-time"),
         "workMode": job.get("workMode", "Onsite"),
         "salary": job.get("salary", "Competitive"),
-        "description": job.get("description", f"We are looking for a {job.get('jobTitle')} to join our team."),
+        "description": job.get("description", f"We are looking for a {title} to join our team."),
         "responsibilities": job.get("responsibilities", ["Contribute to core projects", "Collaborate with team members"]),
-        "requirements": job.get("requirements", job.get("requireSkill", [])),
+        "requirements": job.get("requirements", skills),
         "niceToHave": job.get("niceToHave", []),
         "businessImpact": job.get("businessImpact", []),
         "isActive": status not in ["closed", "deleted"],
-        "postedDate": job.get("postedDate", job.get("createdAt", time.strftime("%Y-%m-%d")))
+        "postedDate": job.get("postedDate") or created_at[:10],
     }
 
 

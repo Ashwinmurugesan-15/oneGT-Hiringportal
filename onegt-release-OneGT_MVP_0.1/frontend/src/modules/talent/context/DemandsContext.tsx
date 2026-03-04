@@ -35,7 +35,21 @@ export const DemandsProvider = ({ children }: { children: ReactNode }) => {
         interviewed: d.interviewed || 0,
         offers: d.offers || 0,
         rejected: d.rejected || 0,
-        reopenedAt: d.reopenedAt ? new Date(d.reopenedAt) : undefined
+        reopenedAt: d.reopenedAt ? new Date(d.reopenedAt) : undefined,
+        // Enhanced job detail fields — passed through from backend normalizer
+        department: d.department,
+        roleCategory: d.roleCategory,
+        level: d.level,
+        employmentType: d.employmentType,
+        workMode: d.workMode,
+        salary: d.salary,
+        description: d.description,
+        responsibilities: Array.isArray(d.responsibilities) ? d.responsibilities : undefined,
+        requirements: Array.isArray(d.requirements) ? d.requirements : undefined,
+        niceToHave: Array.isArray(d.niceToHave) ? d.niceToHave : undefined,
+        businessImpact: Array.isArray(d.businessImpact) ? d.businessImpact : undefined,
+        isActive: d.isActive,
+        postedDate: d.postedDate,
     });
 
     useEffect(() => {

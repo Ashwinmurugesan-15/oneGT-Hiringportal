@@ -111,7 +111,11 @@ async def _check_external_apis():
                 if r.status_code == 200:
                     data = r.json()
                     arr  = data if isinstance(data, list) else data.get("data", data.get("jobOpenings", []))
+                    if arr:
+                        print(f"\n📋 [DEBUG] Guhatek job keys: {list(arr[0].keys())}")
+                        print(f"📋 [DEBUG] Guhatek job sample: { {k: arr[0][k] for k in list(arr[0].keys())[:8]} }\n")
                     checks.append((f"{GREEN}✅{RESET}", "Job Demands",    "/api/applications/jobOpenings",    f"{len(arr)} records returned"))
+
                 elif r.status_code == 404:
                     checks.append((f"{RED}❌{RESET}", "Job Demands",      "/api/applications/jobOpenings",    "404 — Not deployed on this server"))
                 else:
